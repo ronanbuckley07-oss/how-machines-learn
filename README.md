@@ -71,22 +71,25 @@ server with `URL=http://localhost:4173/ npm run check`.
 
 ## Deploy (free)
 
-The build is a folder of static files, so any static host works. `vite.config.js`
-uses a relative `base`, so it also works from a sub-path.
+The build is a folder of static files (`dist/`), so it needs no server.
 
-**GitHub Pages** (set up in this repo): the workflow in
-`.github/workflows/deploy.yml` runs the unit tests, builds, and publishes the
-site on every push to `main`. One-time setup: in the repository's
-**Settings → Pages**, set **Source** to **GitHub Actions**. The site will be at
-<https://ronanbuckley07-oss.github.io/how-machines-learn/>. You can also run the
-workflow by hand from the **Actions** tab.
+### Netlify (recommended)
 
-**Netlify / Vercel / Cloudflare Pages**: import the repository and set
+`netlify.toml` already holds the settings, so there is nothing to type in:
 
-- build command: `npm run build`
-- output directory: `dist`
+1. Sign in at <https://app.netlify.com> (free) and choose **Add new site → Import an existing project**.
+2. Pick **GitHub**, then this repository.
+3. Netlify fills in build command `npm run build` and publish directory `dist` from `netlify.toml`. Click **Deploy**.
 
-Or drag the `dist/` folder onto <https://app.netlify.com/drop>.
+You get a URL like `https://<random-name>.netlify.app` (rename it under **Site configuration → Change site name**).
+Every push to `main` redeploys automatically.
+
+**Even quicker, no Git needed:** run `npm run build`, then drag the `dist` folder onto <https://app.netlify.com/drop>.
+
+### Render
+
+`render.yaml` defines a free static site: in Render choose **New → Blueprint** and pick this repository.
+Static sites on Render don't sleep, unlike the free Node web services.
 
 ## Project structure
 

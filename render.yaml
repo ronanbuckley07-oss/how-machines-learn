@@ -1,0 +1,7 @@
+# Render blueprint: New > Blueprint, pick this repo. A free static site (it never sleeps).
+services:
+  - type: web
+    name: how-machines-learn
+    runtime: static
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
