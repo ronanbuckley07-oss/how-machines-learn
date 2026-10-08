@@ -240,4 +240,35 @@ checks.page = async (page, ok, vp) => {
   }
 };
 
+checks.speed = async (page, ok, vp) => {
+  const box = page.getByRole('group', { name: 'Simulation speed' });
+  await page.locator('#tab-start').click();
+  await page.waitForTimeout(200);
+  ok(!(await box.isVisible()), 'speed control is hidden on the cover');
+  const sec = await openTab(page, 'next-word');
+  ok(await box.isVisible(), 'speed control appears on a chapter with a simulation');
+  const value = box.locator('output');
+  // Go down to 1×, read for a moment, then up to 4× and compare how far it got.
+  while ((await value.textContent()) !== '1×') await box.getByRole('button', { name: 'Slower' }).click();
+  const rate = async () => {
+    await sec.getByRole('button', { name: /read from scratch|keep reading/i }).click();
+    await page.waitForTimeout(300);
+    const a = await page.evaluate(() => window.__ml.ch6.k);
+    await page.waitForTimeout(1500);
+    const b = await page.evaluate(() => window.__ml.ch6.k);
+    await sec.getByRole('button', { name: /pause/i }).click();
+    return (b - a) / 1.5;
+  };
+  const slow = await rate();
+  await box.getByRole('button', { name: 'Faster' }).click();
+  await box.getByRole('button', { name: 'Faster' }).click();
+  ok((await value.textContent()) === '4×', 'the + button steps the speed up to 4×');
+  const fast = await rate();
+  ok(slow > 20 && slow < 90 && fast > slow * 2.5, `reading speed follows the control (${slow.toFixed(0)} → ${fast.toFixed(0)} words/s)`);
+  ok(await box.getByRole('button', { name: 'Faster' }).isDisabled(), '4× is the top speed');
+  const kept = await page.evaluate(() => localStorage.getItem('hml-sim-speed'));
+  ok(kept === '4', 'the chosen speed is remembered');
+  await sec.getByRole('button', { name: /latest/i }).click().catch(() => {});
+};
+
 export default checks;

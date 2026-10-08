@@ -50,6 +50,6 @@ export function mountHero(host) {
     sample();
     for (let i = 0; i < 4; i++) net.step(X, Y, 0.05, 0.9);
     plot.draw();
-  });
+  }, { scaled: false });
   loop.play();
 }

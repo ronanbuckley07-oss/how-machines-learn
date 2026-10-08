@@ -7,7 +7,7 @@ import './chapter.css';
 
 const MAX_DEG = 13;
 const START_N = 12;
-const POINTS_PER_SEC = 4;
+const POINTS_PER_SEC = 2.5;        // × the sim speed
 
 export default {
   id: 'memorizing-vs-learning',

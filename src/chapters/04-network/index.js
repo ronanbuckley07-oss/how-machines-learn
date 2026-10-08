@@ -1,5 +1,5 @@
 import { createPlot, scale, cssVar, MONO_SMALL, cssRgb } from '../../lib/canvas.js';
-import { createLoop } from '../../lib/loop.js';
+import { createLoop, stepper } from '../../lib/loop.js';
 import { createTimeline } from '../../lib/timeline.js';
 import { h, button, slider, segmented, readout, fmt, note } from '../../lib/ui.js';
 import { MLP } from '../../ml/mlp.js';
@@ -7,7 +7,7 @@ import { DATASETS } from '../../ml/datasets.js';
 import './chapter.css';
 
 const G = 44;                 // resolution of the prediction grid behind the points
-const STEPS_PER_FRAME = 4;
+const STEPS_PER_SEC = 70;          // × the sim speed
 const MAX_STEPS = 6000;
 
 export default {
@@ -120,8 +120,10 @@ export default {
     });
 
     // ---------- training ----------
-    const loop = createLoop(lab, () => {
-      train(STEPS_PER_FRAME);
+    const steps = stepper(STEPS_PER_SEC);
+    const loop = createLoop(lab, (dt) => {
+      const n = steps(dt);
+      if (n) train(n);
       if (done) return false;
     });
     loop.onChange((p) => playBtn.setLabel(p ? 'Pause' : 'Play', p ? '❚❚' : '▶'));
@@ -148,6 +150,7 @@ export default {
       loop.play();
     }
     function train(n) {
+      const before = step;
       for (let i = 0; i < n; i++) { net.step(X, Y, cfg.lr, 0.9); step++; }
       const loss = net.loss(X, Y);
       tl.record(step, { loss }, net.getState());
@@ -155,7 +158,7 @@ export default {
       if (accuracy() === 1 && loss < 0.03) done = true;
       if (step >= MAX_STEPS) done = true;
       // Give up once the error has clearly stopped improving (a plateau).
-      if (step % 500 < n) checkpoints.push(loss);
+      if (Math.floor(step / 500) > Math.floor(before / 500)) checkpoints.push(loss);
       const k = checkpoints.length;
       if (k >= 4 && accuracy() < 1 && loss > checkpoints[k - 4] * 0.97) done = true;
       refresh();

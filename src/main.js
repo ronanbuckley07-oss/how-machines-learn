@@ -4,6 +4,7 @@ import './styles/controls.css';
 import { h } from './lib/ui.js';
 import { mountHero } from './hero.js';
 import { reducedMotion } from './lib/motion.js';
+import { SPEEDS, getSpeed, setSpeed, onSpeedChange, speedLabel } from './lib/speed.js';
 
 import ch1 from './chapters/01-model/index.js';
 import ch2 from './chapters/02-descent/index.js';
@@ -77,6 +78,28 @@ function pager(i) {
     nextCh ? h('a', { class: 'next', href: `#${nextCh.id}` }, h('small', {}, 'next up →'), h('span', {}, nextCh.title)) : null);
 }
 
+// ---- sim speed control (bottom-right corner) ----
+const speedBox = (() => {
+  const value = h('output', { class: 'speed__value', 'aria-live': 'polite' });
+  const step = (dir) => setSpeed(SPEEDS[Math.max(0, Math.min(SPEEDS.length - 1, SPEEDS.indexOf(getSpeed()) + dir))]);
+  const slower = h('button', { type: 'button', class: 'speed__btn', 'aria-label': 'Slower', onClick: () => step(-1) }, '−');
+  const faster = h('button', { type: 'button', class: 'speed__btn', 'aria-label': 'Faster', onClick: () => step(1) }, '+');
+  const box = h('div', { class: 'speed', role: 'group', 'aria-label': 'Simulation speed' },
+    h('span', { class: 'speed__label' }, 'sim speed'), slower, value, faster);
+  const paint = () => {
+    const v = getSpeed();
+    value.textContent = speedLabel(v);
+    slower.disabled = v === SPEEDS[0];
+    faster.disabled = v === SPEEDS[SPEEDS.length - 1];
+  };
+  onSpeedChange(paint);
+  paint();
+  document.body.append(box);
+  return box;
+})();
+// Only chapters with something running get the control.
+const NO_SIMS = new Set(['start', 'where-next']);
+
 let current = null;
 function route() {
   let id = decodeURIComponent(location.hash.slice(1)) || 'start';
@@ -94,9 +117,14 @@ function route() {
     t.tabIndex = on ? 0 : -1;
   }
   tabs.get(id).scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  speedBox.hidden = NO_SIMS.has(id);
   document.title = id === 'start' ? 'How Machines Learn' : `${page.title} · How Machines Learn`;
-  if (!first) { window.scrollTo(0, 0); page.el.focus({ preventScroll: true }); }
+  // Always open a tab at its top (the browser would otherwise jump to the #id under the sticky tab bar).
+  window.scrollTo(0, 0);
+  requestAnimationFrame(() => window.scrollTo(0, 0));
+  if (!first) page.el.focus({ preventScroll: true });
 }
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 window.addEventListener('hashchange', route);
 route();
 

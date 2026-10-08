@@ -75,3 +75,25 @@
 .timeline__chart { margin-top: 6px; touch-action: none; cursor: ew-resize; }
 .timeline__row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
 .timeline__row .slider { flex: 1 1 260px; }
+
+/* ---------- sim speed (fixed in the corner) ---------- */
+.speed {
+  position: fixed; right: max(12px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); z-index: 30;
+  display: flex; align-items: center; gap: 6px;
+  background: var(--card); border: 2px solid var(--ink); border-radius: 10px; box-shadow: 3px 3px 0 var(--ink);
+  padding: 4px 6px 4px 12px;
+  transform: rotate(-1deg);
+}
+.speed[hidden] { display: none; }
+.speed__label { font-family: var(--font-hand); font-size: 1.3rem; line-height: 1; color: var(--ink-2); margin-right: 2px; }
+.speed__value { font: 600 1rem var(--font-mono); min-width: 2.6ch; text-align: center; color: var(--learn); }
+.speed__btn {
+  width: 40px; height: 40px; border-radius: 8px; border: 2px solid var(--ink); background: var(--paper);
+  font: 700 1.3rem/1 var(--font-body); color: var(--ink); cursor: pointer; display: grid; place-items: center;
+}
+.speed__btn:hover { background: #fff; }
+.speed__btn:active { transform: translate(1px, 1px); }
+.speed__btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.speed__btn:focus-visible { outline: 3px solid var(--model); outline-offset: 2px; }
+/* keep the last bits of each page clear of the corner control */
+.page.chapter { padding-bottom: 6rem; }

@@ -1,5 +1,5 @@
 import { createPlot, scale, onDrag, cssVar, HAND, cssRgb } from '../../lib/canvas.js';
-import { createLoop } from '../../lib/loop.js';
+import { createLoop, stepper } from '../../lib/loop.js';
 import { createTimeline } from '../../lib/timeline.js';
 import { h, button, slider, segmented, readout, fmt, note } from '../../lib/ui.js';
 import { MLP } from '../../ml/mlp.js';
@@ -150,8 +150,11 @@ export default {
     let step = 0;
     const syncNeuron = () => { neuron.W[0][0] = s.w1; neuron.W[0][1] = s.w2; neuron.b[0][0] = s.b; };
     const pull = () => { s.w1 = neuron.W[0][0]; s.w2 = neuron.W[0][1]; s.b = neuron.b[0][0]; for (const k of ['w1', 'w2', 'b']) sl[k].set(Math.max(-6, Math.min(6, s[k]))); };
-    const loop = createLoop(lab, () => {
-      for (let i = 0; i < 4; i++) { neuron.step(X, Y(), 0.5, 0.9); step++; }
+    const steps = stepper(60);           // training steps per second (× the sim speed)
+    const loop = createLoop(lab, (dt) => {
+      const n = Math.min(steps(dt), 1200 - step);
+      if (!n) return;
+      for (let i = 0; i < n; i++) { neuron.step(X, Y(), 0.5, 0.9); step++; }
       // keep the weights within the sliders' reach so the diagram stays honest
       for (const arr of [neuron.W[0], neuron.b[0]]) for (let i = 0; i < arr.length; i++) arr[i] = Math.max(-6, Math.min(6, arr[i]));
       pull();

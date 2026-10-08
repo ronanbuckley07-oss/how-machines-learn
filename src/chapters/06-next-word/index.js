@@ -7,7 +7,7 @@ import { makeRng } from '../../lib/rng.js';
 import './chapter.css';
 
 const TOP = 8;
-const WORDS_PER_SEC = 160;
+const WORDS_PER_SEC = 60;          // × the sim speed
 const RECORD_EVERY = 20;
 const CHIPS = ['the fox', 'the lion was', 'slow and', 'a little', 'said the'];
 

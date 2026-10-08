@@ -17,6 +17,8 @@ const browser = await chromium.launch({ executablePath: exe });
 for (const vp of [{ name: 'desktop', width: 1280, height: 900 }, { name: 'phone', width: 375, height: 740, isMobile: true, hasTouch: true }]) {
   console.log(`\n[${vp.name} ${vp.width}px]`);
   const ctx = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, isMobile: vp.isMobile, hasTouch: vp.hasTouch, deviceScaleFactor: 2 });
+  // Run the sims at 4× so the suite stays quick (the "speed" check tests the control itself).
+  await ctx.addInitScript(() => { try { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('hml-sim-speed', '4'); sessionStorage.setItem('seeded', '1'); } } catch {} });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));

@@ -8,7 +8,7 @@ import './chapter.css';
 const X0 = 8, X1 = 37, Y0 = -5, Y1 = 115;
 const HX1 = 12, HX2 = 33;           // where the two drag handles sit
 const LR = 0.04;                    // learning rate for "let the computer try"
-const STEPS_PER_SEC = 40;           // slow enough to watch each nudge
+const STEPS_PER_SEC = 15;           // slow enough to watch each nudge (× the sim speed)
 
 export default {
   id: 'what-is-a-model',

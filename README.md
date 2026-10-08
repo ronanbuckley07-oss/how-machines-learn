@@ -60,7 +60,7 @@ and phone (375px) widths. It drags handles, moves sliders and presses play,
 then asserts real outcomes: gradient descent reaches the exact least-squares
 line, a too-large learning rate diverges, the network classifies every point,
 test error rises with complexity and falls with more data, scrubbing the
-timeline restores earlier models. It also clicks through every tab (each shows only
+timeline restores earlier models. It also checks the sim-speed control really changes how fast things run, clicks through every tab (each shows only
 its own page, back button and "next up" links work), checks there's no horizontal scroll,
 no console errors, that touch targets are large enough, and that
 `prefers-reduced-motion` is respected. Screenshots go to `shots/`.
@@ -106,6 +106,7 @@ how-machines-learn/
       loop.js              requestAnimationFrame loop; pauses off-screen and in hidden tabs
       canvas.js            HiDPI canvas, scales, pointer dragging
       ui.js                sliders, buttons, segmented controls, readouts
+      speed.js             the page-wide sim speed (corner control)
       rng.js, motion.js    seeded randomness, prefers-reduced-motion
     ml/                    the machine learning, no dependencies
       linear.js            linear regression + gradient descent
@@ -152,6 +153,11 @@ const past = tl.rewindHere();                   // on play: resume from the past
   palette was checked for colour-blind separation and contrast on the paper colour.
 - **Tabs:** one notebook tab per chapter plus a cover. Each tab has its own URL,
   so links, bookmarks and the back button work; arrow keys move between tabs.
+- **Sim speed:** a small control in the bottom-right corner (shown on chapters
+  with a simulation) sets how fast every simulation runs: ¼×, ½×, 1×, 2× or 4×.
+  The choice is remembered in the browser. Base rates live at the top of each
+  chapter (e.g. `STEPS_PER_SEC`) and are multiplied by that speed in
+  `src/lib/loop.js`, so a chapter runs at the same pace at any frame rate.
 - Training loops do a little work per animation frame and pause when their
   chapter is hidden or off screen, so the page never freezes.
 - With `prefers-reduced-motion`, page-turn animations and the cover animation

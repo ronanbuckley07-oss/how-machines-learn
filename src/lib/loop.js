@@ -1,9 +1,14 @@
+import { getSpeed } from './speed.js';
+
 /**
  * requestAnimationFrame loop that does a little work per frame so the page
  * never freezes. It auto-pauses while `el` is scrolled off screen or the tab
  * is hidden, and resumes when it comes back (if it was playing).
+ *
+ * `tick(dt)` gets the elapsed time in seconds, multiplied by the page-wide
+ * sim speed (pass { scaled: false } to opt out, e.g. for decoration).
  */
-export function createLoop(el, tick) {
+export function createLoop(el, tick, { scaled = true } = {}) {
   let playing = false;
   let visible = true;
   let raf = 0;
@@ -13,7 +18,7 @@ export function createLoop(el, tick) {
   const frame = (t) => {
     raf = 0;
     if (!playing || !visible) return;
-    const dt = last ? Math.min(0.05, (t - last) / 1000) : 1 / 60;
+    const dt = (last ? Math.min(0.05, (t - last) / 1000) : 1 / 60) * (scaled ? getSpeed() : 1);
     last = t;
     const keepGoing = tick(dt);
     if (keepGoing === false) { loop.pause(); return; }
@@ -51,4 +56,15 @@ export function createLoop(el, tick) {
     onChange(f) { listeners.add(f); },
   };
   return loop;
+}
+
+/**
+ * Turns elapsed time into a whole number of steps at `perSecond`, carrying
+ * the remainder over, so the speed is the same at any frame rate.
+ */
+export function stepper(perSecond) {
+  let acc = 0;
+  const take = (dt) => { acc += dt * perSecond; const n = Math.floor(acc); acc -= n; return n; };
+  take.reset = () => { acc = 0; };
+  return take;
 }

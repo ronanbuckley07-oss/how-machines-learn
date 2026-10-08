@@ -11,7 +11,7 @@ import './chapter.css';
 // through the real error surface, not an illustration.
 const A0 = -1.6, A1 = 2.6;          // slope range shown (scaled units)
 const START_A = -1.25;
-const STEPS_PER_SEC = 6;
+const STEPS_PER_SEC = 3;           // × the sim speed
 const PRESETS = { slow: 0.02, good: 0.15, wild: 1.04 };
 
 export default {
