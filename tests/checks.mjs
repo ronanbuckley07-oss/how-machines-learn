@@ -1,7 +1,12 @@
 // Per-chapter checks used by e2e.mjs. Each receives (page, ok, viewport).
 
 /** Switch to a chapter's tab the way a reader would (clicking it) and return its panel. */
-async function openTab(page, id) {
+export async function openTab(page, id) {
+  const course = id.startsWith('llm-') ? 'llm' : id.startsWith('sde-') ? 'sde' : 'ml';
+  if (!(await page.locator(`#tab-${id}`).count())) {
+    await page.evaluate((c) => { location.hash = c; }, course);
+    await page.locator(`#tab-${id}`).waitFor();
+  }
   await page.locator(`#tab-${id}`).click();
   const sec = page.locator(`#${id}`);
   await sec.waitFor({ state: 'visible' });
@@ -205,6 +210,8 @@ checks.ch6 = async (page, ok, vp) => {
 };
 
 checks.page = async (page, ok, vp) => {
+  await page.evaluate(() => { location.hash = 'ml'; });
+  await page.locator('#tab-ml-cover').waitFor();
   const ids = await page.locator('.tabs [role=tab]').evaluateAll((els) => els.map((e) => e.getAttribute('aria-controls')));
   ok(ids.length === 8, `8 tabs: ${ids.join(', ')}`);
   for (const id of ids) {
@@ -215,19 +222,20 @@ checks.page = async (page, ok, vp) => {
       selected: document.querySelector('[aria-selected=true]').getAttribute('aria-controls'),
       overflow: document.documentElement.scrollWidth - innerWidth,
       hash: location.hash,
+      href: document.getElementById('tab-' + id).getAttribute('href'),
     }), id);
-    ok(r.visible.length === 1 && r.visible[0] === id && r.selected === id && r.hash === '#' + id && r.overflow <= 0,
+    ok(r.visible.length === 1 && r.visible[0] === id && r.selected === id && r.hash === r.href && r.overflow <= 0,
       `tab "${id}" shows only its own page (overflow ${r.overflow}px)`);
   }
   // Back button returns to the previous tab.
   await page.goBack();
   await page.waitForTimeout(200);
-  ok(await page.evaluate(() => location.hash) === '#' + ids[ids.length - 2], 'browser back goes to the previous tab');
+  ok(await page.evaluate(() => location.hash) === `#ml/${ids[ids.length - 2]}`, 'browser back goes to the previous tab');
   // "next up" link at the bottom of a chapter moves to the next one.
   await page.locator('#tab-what-is-a-model').click();
   await page.locator('#what-is-a-model .pager .next').click();
   await page.waitForTimeout(200);
-  ok(await page.evaluate(() => location.hash) === '#getting-less-wrong', 'the "next up" link opens the next chapter');
+  ok(await page.evaluate(() => location.hash) === '#ml/getting-less-wrong', 'the "next up" link opens the next chapter');
   if (vp.name === 'phone') {
     const small = [];
     for (const id of ids) {
@@ -242,9 +250,9 @@ checks.page = async (page, ok, vp) => {
 
 checks.speed = async (page, ok, vp) => {
   const box = page.getByRole('group', { name: 'Simulation speed' });
-  await page.locator('#tab-start').click();
-  await page.waitForTimeout(200);
-  ok(!(await box.isVisible()), 'speed control is hidden on the cover');
+  await page.evaluate(() => { location.hash = 'ml'; });
+  await page.waitForTimeout(250);
+  ok(!(await box.isVisible()), 'speed control is hidden on a notebook cover');
   const sec = await openTab(page, 'next-word');
   ok(await box.isVisible(), 'speed control appears on a chapter with a simulation');
   const value = box.locator('output');

@@ -29,6 +29,8 @@ for (const vp of [{ name: 'desktop', width: 1280, height: 900 }, { name: 'phone'
   ok(overflow <= 0, `no horizontal scroll (overflow ${overflow}px)`);
 
   const { default: checks } = await import('./checks.mjs');
+  const { default: more } = await import('./checks-notebooks.mjs');
+  Object.assign(checks, more);
   for (const [name, fn] of Object.entries(checks)) {
     if (only.length && !only.includes(name)) continue;
     console.log(` ${name}`);
@@ -43,14 +45,15 @@ if (!only.length || only.includes('motion')) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
   const page = await ctx.newPage();
   await page.goto(URL, { waitUntil: 'networkidle' });
-  await page.locator('#tab-a-single-neuron').click();
+  await page.evaluate(() => { location.hash = 'ml/a-single-neuron'; });
   await page.locator('#a-single-neuron').waitFor();
   const anim = await page.evaluate(() => getComputedStyle(document.getElementById('a-single-neuron')).animationName);
   ok(anim === 'none', `page-turn animation is skipped (${anim})`);
-  await page.locator('#tab-start').click();
-  const a = await page.locator('#hero-plot canvas').screenshot();
+  await page.evaluate(() => { location.hash = 'ml'; });
+  await page.locator('#ml-cover canvas').waitFor();
+  const a = await page.locator('#ml-cover canvas').screenshot();
   await page.waitForTimeout(800);
-  const b = await page.locator('#hero-plot canvas').screenshot();
+  const b = await page.locator('#ml-cover canvas').screenshot();
   ok(a.equals(b), 'hero animation is paused');
   await ctx.close();
 }

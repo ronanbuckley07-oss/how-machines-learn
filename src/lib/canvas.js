@@ -132,3 +132,12 @@ export function cssRgb(name) {
 
 /** Read a CSS custom property (colors live in tokens.css, not in JS). */
 export const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+/** Text with a paper-coloured halo so it stays readable on top of busy lines. */
+export function label(ctx, text, x, y, color) {
+  ctx.save();
+  ctx.lineWidth = 5; ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(255,253,246,0.92)';
+  ctx.strokeText(text, x, y);
+  ctx.fillStyle = color; ctx.fillText(text, x, y);
+  ctx.restore();
+}

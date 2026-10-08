@@ -1,0 +1,6 @@
+.sde-grid { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 860px) { .sde-grid { grid-template-columns: minmax(0, 2.4fr) minmax(0, 1fr); } }
+.sde-side { display: flex; flex-direction: column; gap: 10px; }
+.sde-say { color: var(--ink-2); font-size: 0.95rem; margin: 10px 0 0; min-height: 3em; }
+.sde-label { font-family: var(--font-hand); font-size: 1.3rem; color: var(--ink-2); margin: 4px 0; }
+.sde-sliders { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 0 20px; }

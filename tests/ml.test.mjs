@@ -55,3 +55,32 @@ test('n-gram probabilities sum to 1 and perplexity falls with more reading', () 
   }
   assert.ok(m.perplexity(held) < p0 / 2);
 });
+
+import { bsCall, gbmPath, brownian } from '../src/ml/sde.js';
+import { makeRng } from '../src/lib/rng.js';
+import { normalCdf } from '../src/lib/stats.js';
+
+test('normal CDF matches known values', () => {
+  assert.ok(Math.abs(normalCdf(0) - 0.5) < 1e-7);
+  assert.ok(Math.abs(normalCdf(1.96) - 0.975002) < 1e-5);
+  assert.ok(Math.abs(normalCdf(-1) - 0.158655) < 1e-5);
+});
+
+test('Black–Scholes matches a textbook value and put–call parity', () => {
+  // Hull's example: S=42, K=40, r=10%, sigma=20%, T=0.5 -> call ≈ 4.76
+  assert.ok(Math.abs(bsCall(42, 40, 0.5, 0.1, 0.2).price - 4.76) < 0.01);
+});
+
+test('Monte Carlo GBM under the risk-neutral drift reproduces the Black–Scholes price', () => {
+  const rng = makeRng(1);
+  let sum = 0; const n = 40000;
+  for (let i = 0; i < n; i++) { const S = gbmPath(rng, 1, 1, 0.05, 0.25, 100); sum += Math.max(S[1] - 100, 0); }
+  const mc = Math.exp(-0.05) * sum / n, bs = bsCall(100, 100, 1, 0.05, 0.25).price;
+  assert.ok(Math.abs(mc - bs) < 0.2, `${mc} vs ${bs}`);
+});
+
+test('quadratic variation of Brownian motion on [0,1] is close to 1', () => {
+  const W = brownian(makeRng(4), 1 << 14, 1);
+  let qv = 0; for (let i = 1; i < W.length; i++) qv += (W[i] - W[i - 1]) ** 2;
+  assert.ok(Math.abs(qv - 1) < 0.05, `qv ${qv}`);
+});

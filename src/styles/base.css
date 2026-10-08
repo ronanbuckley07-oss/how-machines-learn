@@ -180,6 +180,7 @@ footer.site-footer { padding: 2rem var(--gutter) 3rem; text-align: center; color
 
 /* ---------- hub: a desk of notebooks ---------- */
 .masthead__course { font-family: var(--font-display); font-size: 1rem; color: var(--ink-3); padding-bottom: 12px; white-space: nowrap; }
+@media (max-width: 1399px) { .masthead__course { display: none; } }
 .hub__head { max-width: 40rem; }
 .hub__head h1 { font-size: clamp(3rem, 9vw, 5.4rem); }
 .desk { display: grid; gap: 28px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-top: 1.4rem; }

@@ -1,19 +1,19 @@
-# How Machines Learn — an explorable explanation
+# Field Notes: explorable maths notebooks
 
-A small tabbed site, styled like a paper field notebook, that teaches how
-machine learning works to people with no technical background. Readers learn by dragging, sliding and watching real
-models train. **Nothing is pre-recorded**: every loss, gradient, prediction and
-training run is computed live in the browser, in plain JavaScript.
+A small static site of hands-on notebooks, styled like a paper field notebook.
+A **hub** page lists the notebooks; each one has a cover and a set of chapter
+tabs. **Nothing is pre-recorded**: every loss, gradient, prediction, path and
+price is computed live in the browser, in plain JavaScript (KaTeX is used only
+to typeset formulas).
 
-| # | Chapter | What the reader does | What really runs |
-|---|---------|----------------------|------------------|
-| 1 | What is a model? | Drags a line through ice-cream sales data, then lets the computer try | Linear regression, gradient descent on mean squared error |
-| 2 | Learning by getting less wrong | Rolls a ball down the error curve with a step-size slider | Exact 1D slice of the loss; gradient descent that really diverges when the step is too big |
-| 3 | A single neuron | Drives weights, bias and activation; tries to solve two puzzles | One sigmoid neuron trained by gradient descent (it provably can't solve XOR) |
-| 4 | A neural network | Trains a network on circles / corners / spirals, changes its size | Multi-layer perceptron with backpropagation + momentum |
-| 5 | Memorizing vs. learning | Raises model complexity until it overfits, then collects more data | Exact least-squares polynomial fits (Chebyshev basis) with a held-out test set |
-| 6 | How chatbots guess the next word | Types words, sees next-word probabilities, samples text | Trigram model with Witten–Bell smoothing, trained on ten retold Aesop fables |
-| 7 | Epilogue | Glossary, what was simplified, further reading | — |
+| Notebook | Chapters | What really runs |
+|---|---|---|
+| **How machines learn** (no maths needed) | models, gradient descent, a neuron, a network, overfitting, next-word guessing | linear regression, an MLP with backprop, least-squares polynomials, a smoothed trigram model |
+| **The math inside an LLM** (algebra helps) | tokens and vectors, softmax and cross-entropy, attention, a transformer block, training, sampling and scale | a byte-pair-encoding tokenizer trained on the page, live dot products, softmax gradients, attention with a causal mask, a full transformer block forward pass with every matrix shown, a tiny next-letter model trained by gradient descent, a parameter/compute calculator that reproduces GPT-2 (124M) and GPT-3 (175B) |
+| **Stochastic calculus & the stock market** (calculus helps) | random walks, quadratic variation, Itô's lemma, geometric Brownian motion, Black–Scholes and delta hedging, fat tails | Brownian paths, numerical checks of (dW)² = dt and of Itô's lemma, thousands of simulated stocks, Monte Carlo option pricing against the closed form, a delta-hedging simulation, GARCH and jump models |
+
+Links look like `#` (hub), `#llm` (a notebook's cover) and `#llm/llm-attention`
+(a chapter). Old single-notebook links such as `#what-is-a-model` still work.
 
 ### The time element
 
@@ -55,7 +55,7 @@ npm test           # unit tests: MLP gradient check, XOR, regression, n-gram
 npm run check      # end-to-end: needs `npm run dev` running in another terminal
 ```
 
-`npm run check` drives every chapter in headless Chromium at desktop (1280px)
+`npm run check` drives every chapter of every notebook in headless Chromium at desktop (1280px)
 and phone (375px) widths. It drags handles, moves sliders and presses play,
 then asserts real outcomes: gradient descent reaches the exact least-squares
 line, a too-large learning rate diverges, the network classifies every point,
@@ -98,7 +98,9 @@ Static sites on Render don't sleep, unlike the free Node web services.
 how-machines-learn/
   index.html               page shell, hero, colour key
   src/
-    main.js                tabs + hash routing; builds each chapter the first time it's opened
+    main.js                hub, notebook covers, tabs and hash routing; builds each page the first time it's opened
+    hub.js                 the home page (a desk of notebooks)
+    courses/               one module per notebook: ml.js, llm/, sde/ (each chapter in its own folder)
     hero.js                the cover's polaroid: a small network fitting drifting data, live
     styles/                tokens.css (colours, type), base.css, controls.css
     lib/
@@ -107,6 +109,8 @@ how-machines-learn/
       canvas.js            HiDPI canvas, scales, pointer dragging
       ui.js                sliders, buttons, segmented controls, readouts
       speed.js             the page-wide sim speed (corner control)
+      math.js              KaTeX helpers: renderMath(), tex(), setTex()
+      stats.js             mean/std, normal pdf and cdf, softmax, histograms
       rng.js, motion.js    seeded randomness, prefers-reduced-motion
     ml/                    the machine learning, no dependencies
       linear.js            linear regression + gradient descent
@@ -114,9 +118,25 @@ how-machines-learn/
       datasets.js          circles, four corners (XOR), spirals
       poly.js              polynomial least squares (Chebyshev features)
       ngram.js, fables.js  trigram next-word model and its training text
+      bpe.js               byte-pair-encoding tokenizer
+      charmodel.js         tiny next-character model (embeddings + softmax), trained by gradient descent
+      sde.js               Brownian motion, geometric Brownian motion, Black–Scholes
     chapters/NN-name/      one folder per chapter: index.js + chapter.css
   tests/                   unit tests (node:test) and the Playwright end-to-end check
 ```
+
+### Adding a notebook
+
+A notebook is a module under `src/courses/` that exports
+`{ id, title, sub, level, time, spine, blurb, lede, key, hero, heroCaption, chapters }`
+(see `src/courses/llm/index.js`). Add it to the `courses` array in `src/main.js`
+and it appears on the hub with its own cover and tabs. `hero(element)` draws the
+cover picture; `spine` is the notebook's cover colour.
+
+Write formulas in chapter text as `\\( inline \\)` or `\\[ display \\]`; they're
+typeset with KaTeX after the chapter mounts (`src/lib/math.js` also has `tex()` and
+`setTex()` for live formulas). Chapters that have nothing animated set `sims: false`
+so the speed control stays hidden.
 
 ### Adding or reordering chapters
 
