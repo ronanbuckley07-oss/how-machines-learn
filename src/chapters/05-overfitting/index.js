@@ -1,7 +1,7 @@
-import { createPlot, scale, drawGrid, dot, cssVar } from '../../lib/canvas.js';
+import { createPlot, scale, drawGrid, dot, cssVar, HAND, MONO_SMALL, withAlpha } from '../../lib/canvas.js';
 import { createLoop } from '../../lib/loop.js';
 import { createTimeline } from '../../lib/timeline.js';
-import { h, button, slider, readout, fmtAuto } from '../../lib/ui.js';
+import { h, button, slider, readout, fmtAuto, note } from '../../lib/ui.js';
 import { sampleData, fitPoly, predict, mse, truth } from '../../ml/poly.js';
 import './chapter.css';
 
@@ -12,6 +12,8 @@ const POINTS_PER_SEC = 4;
 export default {
   id: 'memorizing-vs-learning',
   title: 'Memorizing vs. learning',
+  tab: 'Overfitting',
+  blurb: 'Catch a model memorizing instead of learning',
   mount(root) {
     let seed = 8;
     let { pool, test } = sampleData(seed);
@@ -19,11 +21,12 @@ export default {
     let sweep = [], w = [];
 
     root.append(h('div', { class: 'prose reveal', html: `
-      <p>So far, a better fit has always meant a better model. Here's where that stops being true.</p>
-      <p>The <span class="term term--data">solid dots</span> are days the model learns from. The <span class="term term--data">hollow dots</span>
-      are days we hide from it, and only use afterwards to check its predictions — like a surprise exam.</p>
-      <p>Drag the <strong>complexity</strong> slider to give the model more freedom to bend. Watch both error numbers.</p>` }));
+      <p>Up to now, a closer fit has always meant a better model. This is where that stops being true.</p>
+      <p>The <span class="term term--data">solid dots</span> are days the model gets to learn from. The <span class="term term--data">hollow dots</span>
+      are days we hide from it and only use afterwards to check its guesses. Think of them as a surprise exam.</p>
+      <p>Drag the <strong>complexity</strong> slider to give the model more freedom to bend, and keep an eye on both error numbers.</p>` }));
 
+    root.append(note('crank the complexity way up and watch the red number'));
     const lab = h('div', { class: 'lab reveal' });
     root.append(lab);
     const gridEl = h('div', { class: 'lab__grid lab__grid--split' });
@@ -44,11 +47,11 @@ export default {
           for (let i = 0; i <= 200; i++) { const x = -1 + i / 100; i ? ctx.lineTo(sx(x), sy(truth(x))) : ctx.moveTo(sx(x), sy(truth(x))); }
           ctx.stroke(); ctx.setLineDash([]);
         }
-        for (const p of test) dot(ctx, sx(p.x), sy(p.y), 4, data, { glow: 0, hollow: true });
+        for (const p of test) dot(ctx, sx(p.x), sy(p.y), 4, data, { hollow: true });
         // the model, clipped to the plot
         ctx.save();
         ctx.beginPath(); ctx.rect(0, 0, wd, hgt); ctx.clip();
-        ctx.strokeStyle = model; ctx.lineWidth = 3; ctx.shadowColor = model; ctx.shadowBlur = 14; ctx.lineJoin = 'round';
+        ctx.strokeStyle = model; ctx.lineWidth = 3; ctx.lineJoin = 'round';
         ctx.beginPath();
         for (let i = 0; i <= 400; i++) {
           const x = -1 + i / 200;
@@ -57,7 +60,7 @@ export default {
         }
         ctx.stroke();
         ctx.restore();
-        for (const p of pool.slice(0, n)) dot(ctx, sx(p.x), sy(p.y), 5, data, { glow: 8 });
+        for (const p of pool.slice(0, n)) dot(ctx, sx(p.x), sy(p.y), 5, data);
         if (zone() === 'memorizing') {
           ctx.strokeStyle = cssVar('--error'); ctx.lineWidth = 3;
           ctx.strokeRect(1.5, 1.5, wd - 3, hgt - 3);
@@ -89,12 +92,12 @@ export default {
         const errC = cssVar('--error'), dataC = cssVar('--data'), ink3 = cssVar('--ink-3');
         // memorizing zone: complexity where hidden-day error is far above its best
         const best = Math.min(...sweep.map((s) => s.test));
-        ctx.fillStyle = 'rgba(255,93,115,0.10)';
+        ctx.fillStyle = withAlpha('--error', 0.1);
         sweep.forEach((s, d) => { if (s.test > best * 2.5 && d > sweep.findIndex((t) => t.test === best)) ctx.fillRect(sx(d - 0.5), 0, sx(1) - sx(0), hgt - 22); });
-        ctx.fillStyle = ink3; ctx.font = '10px "JetBrains Mono", monospace'; ctx.textAlign = 'center';
+        ctx.fillStyle = ink3; ctx.font = MONO_SMALL; ctx.textAlign = 'center';
         for (const d of [0, 3, 6, 9, 12]) ctx.fillText(String(d), sx(d), hgt - 6);
         const line = (key, col, dash) => {
-          ctx.save(); ctx.setLineDash(dash); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.shadowColor = col; ctx.shadowBlur = 6;
+          ctx.save(); ctx.setLineDash(dash); ctx.strokeStyle = col; ctx.lineWidth = 2;
           ctx.beginPath(); sweep.forEach((s, d) => (d ? ctx.lineTo(sx(d), sy(ly(s[key]))) : ctx.moveTo(sx(d), sy(ly(s[key]))))); ctx.stroke(); ctx.restore();
         };
         line('train', dataC, [5, 4]);
@@ -102,10 +105,10 @@ export default {
         // current complexity
         ctx.strokeStyle = cssVar('--learn'); ctx.lineWidth = 1.5;
         ctx.beginPath(); ctx.moveTo(sx(degree), 4); ctx.lineTo(sx(degree), hgt - 22); ctx.stroke();
-        dot(ctx, sx(degree), sy(ly(sweep[degree].test)), 4.5, errC, { glow: 8 });
-        dot(ctx, sx(degree), sy(ly(sweep[degree].train)), 4.5, dataC, { glow: 8 });
+        dot(ctx, sx(degree), sy(ly(sweep[degree].test)), 4.5, errC);
+        dot(ctx, sx(degree), sy(ly(sweep[degree].train)), 4.5, dataC);
         // direct labels
-        ctx.font = '11px Inter, sans-serif'; ctx.textAlign = 'right';
+        ctx.font = HAND(19); ctx.textAlign = 'right';
         ctx.fillStyle = errC; ctx.fillText('hidden days', wd - 16, sy(ly(sweep[MAX_DEG].test)) + (sweep[MAX_DEG].test > hi * 0.5 ? 14 : -8));
         const yTest = sy(ly(sweep[MAX_DEG].test)), yTrain = sy(ly(sweep[MAX_DEG].train));
         ctx.fillStyle = dataC; ctx.fillText('learned days', wd - 16, Math.abs(yTest - yTrain) < 18 ? yTrain + 16 : yTrain - 6);
@@ -141,7 +144,7 @@ export default {
     loop.onChange((p) => moreBtn.setLabel(p ? 'Pause' : 'Collect more data', p ? '❚❚' : '▶'));
 
     const tl = createTimeline(lab, {
-      title: 'Data timeline — errors as more days are collected',
+      title: 'time machine: errors as more days are collected',
       unit: 'day',
       logY: true,
       series: [
@@ -197,14 +200,14 @@ export default {
     }
 
     root.append(h('div', { class: 'prose reveal', html: `
-      <p>At high complexity the curve passes almost exactly through every learned dot, so its error on them drops toward zero.
-      But those dots contain random noise — a cold snap, a festival — and the curve bends to fit that noise too. On the
-      hidden days it's wildly wrong. That's <span class="term term--error">overfitting</span>: memorizing the examples instead of
-      learning the pattern behind them.</p>
-      <p>Now set complexity high and press <strong>Collect more data</strong>. With more days to learn from, there's much less room to
-      memorize, and even a flexible model settles down to the real pattern. Scrub the timeline back to see the moment it changes.</p>
-      <p>This is why machine-learning researchers always keep a <span class="term term--data">test set</span> locked away, and why
-      more data is often the best medicine. A model is only useful if it does well on examples it has never seen.</p>` }));
+      <p>At high complexity the curve passes almost exactly through every learned dot, so its error on them drops to nearly zero.
+      But those dots contain random noise (a cold snap, a local festival) and the curve bends to fit the noise too. On the hidden
+      days it's wildly wrong. That's <span class="term term--error">overfitting</span>: memorizing the examples instead of learning the
+      pattern behind them.</p>
+      <p>Now leave the complexity high and press <strong>Collect more data</strong>. With more days to learn from there's far less room
+      to memorize, and even a very bendy model settles down to the real pattern. Drag the time machine back to see the moment it changes.</p>
+      <p>This is why people who build models always keep a <span class="term term--data">test set</span> locked away, and why more data
+      is so often the best medicine. A model is only useful if it does well on examples it has never seen.</p>` }));
 
     refit();
     recordNow(true);

@@ -1,7 +1,7 @@
-import { createPlot, scale, onDrag, cssVar } from '../../lib/canvas.js';
+import { createPlot, scale, onDrag, cssVar, HAND, cssRgb } from '../../lib/canvas.js';
 import { createLoop } from '../../lib/loop.js';
 import { createTimeline } from '../../lib/timeline.js';
-import { h, button, slider, segmented, readout, fmt } from '../../lib/ui.js';
+import { h, button, slider, segmented, readout, fmt, note } from '../../lib/ui.js';
 import { MLP } from '../../ml/mlp.js';
 import './chapter.css';
 
@@ -22,20 +22,23 @@ const svg = (tag, attrs = {}) => { const el = document.createElementNS(SVGNS, ta
 export default {
   id: 'a-single-neuron',
   title: 'A single neuron',
+  tab: 'Neuron',
+  blurb: 'Wire up one artificial neuron by hand',
   mount(root) {
     const s = { x1: 0.8, x2: 0.3, w1: 3, w2: -2.5, b: -0.5, act: 'sigmoid' };
     let task = 'calm';
 
     root.append(h('div', { class: 'prose reveal', html: `
-      <p>A line can only do so much. To build models that can recognise faces or translate languages, we need a more
-      flexible building block. Meet the <strong>artificial neuron</strong> — loosely inspired by brain cells, but really just a tiny calculator.</p>
-      <p>This one decides whether it's a beach day. It gets two <span class="term term--data">inputs</span>: how sunny it is
-      and how windy it is (0 = not at all, 1 = very). It multiplies each input by a <span class="term term--model">weight</span>
-      — how much it cares about that input — adds them up with a starting nudge called the <span class="term term--model">bias</span>,
-      then squashes the total into a final answer.</p>
-      <p>Move the sliders. Thick wires mean a big weight; <span class="term term--model">blue</span> wires push the answer up,
-      <span class="term term--error">red</span> wires pull it down.</p>` }));
+      <p>A straight line can only do so much. To recognise faces or translate languages we need a more flexible building block.
+      Say hello to the <strong>artificial neuron</strong>. It's loosely inspired by brain cells, but honestly it's just a tiny calculator.</p>
+      <p>This one decides whether it's a beach day. It takes two <span class="term term--data">inputs</span>: how sunny it is and how windy
+      it is (0 means not at all, 1 means very). It multiplies each input by a <span class="term term--model">weight</span>, which is how
+      much it cares about that input. Then it adds them up along with a starting nudge called the
+      <span class="term term--model">bias</span>, and squashes the total into a final answer.</p>
+      <p>Play with the sliders. Thick wires are big weights. <span class="term term--model">Blue</span> wires push the answer up and
+      <span class="term term--error">red</span> ones pull it down.</p>` }));
 
+    root.append(note('wiggle the sliders, or drag the orange dot on the map'));
     const lab = h('div', { class: 'lab reveal' });
     root.append(lab);
     const grid = h('div', { class: 'lab__grid lab__grid--even' });
@@ -82,26 +85,27 @@ export default {
       h('div', { class: 'controls' }, h('span', { class: 'slider__label' }, 'Squash with'), actSeg.el));
 
     // ---------- the decision map ----------
-    right.append(h('p', { class: 'caption ch3-cap' }, 'Every possible day, coloured by the neuron\'s answer. Drag the amber dot to change the inputs.'));
+    right.append(h('p', { class: 'caption ch3-cap' }, 'Every possible day, coloured by the neuron\'s answer. Drag the orange dot to change the inputs.'));
     let sx, sy;
     const map = createPlot(right, {
       aspect: 1, min: 240, max: 400,
       draw(ctx, w, hgt) {
         sx = scale(-0.1, 1.1, 30, w - 12); sy = scale(-0.1, 1.1, hgt - 30, 12);
         const res = 4, a = ACT[s.act];
+        const [mr, mg, mb] = cssRgb('--model');
         const model = cssVar('--model');
         for (let px = 0; px < w; px += res) for (let py = 0; py < hgt; py += res) {
           const o = (a.f(s.w1 * sx.invert(px + res / 2) + s.w2 * sy.invert(py + res / 2) + s.b) - a.lo) / (a.hi - a.lo);
-          ctx.fillStyle = `rgba(77,226,255,${0.04 + 0.5 * Math.min(1, Math.max(0, o))})`;
+          ctx.fillStyle = `rgba(${mr},${mg},${mb},${0.03 + 0.4 * Math.min(1, Math.max(0, o))})`;
           ctx.fillRect(px, py, res, res);
         }
         // boundary where the sum is exactly zero
-        ctx.save(); ctx.setLineDash([6, 5]); ctx.strokeStyle = 'rgba(232,236,244,0.7)'; ctx.lineWidth = 1.5;
+        ctx.save(); ctx.setLineDash([6, 5]); ctx.strokeStyle = 'rgba(34,32,28,0.75)'; ctx.lineWidth = 1.5;
         ctx.beginPath();
         if (Math.abs(s.w2) > 1e-6) { const y = (x) => -(s.w1 * x + s.b) / s.w2; ctx.moveTo(sx(-0.1), sy(y(-0.1))); ctx.lineTo(sx(1.1), sy(y(1.1))); }
         else if (Math.abs(s.w1) > 1e-6) { const x = -s.b / s.w1; ctx.moveTo(sx(x), 0); ctx.lineTo(sx(x), hgt); }
         ctx.stroke(); ctx.restore();
-        ctx.fillStyle = cssVar('--ink-3'); ctx.font = '11px Inter, sans-serif';
+        ctx.fillStyle = cssVar('--ink-3'); ctx.font = HAND(19);
         ctx.textAlign = 'right'; ctx.fillText('sunny →', w - 12, hgt - 10);
         ctx.save(); ctx.translate(14, 16); ctx.rotate(Math.PI / 2); ctx.textAlign = 'left'; ctx.fillText('windy →', 0, 0); ctx.restore();
         // the four example days
@@ -111,15 +115,15 @@ export default {
           const x = sx(cx), y = sy(cy);
           ctx.lineWidth = 2.5;
           ctx.strokeStyle = got === want ? model : cssVar('--error');
-          ctx.fillStyle = want ? cssVar('--data') : cssVar('--bg');
+          ctx.fillStyle = want ? cssVar('--data') : cssVar('--card');
           ctx.beginPath(); ctx.rect(x - 9, y - 9, 18, 18); ctx.fill(); ctx.stroke();
         });
         // the current input
         const ix = sx(s.x1), iy = sy(s.x2);
-        ctx.save(); ctx.shadowColor = cssVar('--data'); ctx.shadowBlur = 14;
+        ctx.save();
         ctx.beginPath(); ctx.arc(ix, iy, 9, 0, Math.PI * 2); ctx.fillStyle = cssVar('--data'); ctx.fill();
         ctx.restore();
-        ctx.beginPath(); ctx.arc(ix, iy, 9, 0, Math.PI * 2); ctx.lineWidth = 2; ctx.strokeStyle = cssVar('--bg'); ctx.stroke();
+        ctx.beginPath(); ctx.arc(ix, iy, 9, 0, Math.PI * 2); ctx.lineWidth = 2; ctx.strokeStyle = cssVar('--ink'); ctx.stroke();
       },
     });
     map.canvas.setAttribute('role', 'img');
@@ -168,7 +172,7 @@ export default {
     }, { primary: true, icon: '▶' });
     right.append(h('div', { class: 'controls' }, learnBtn));
     const tl = createTimeline(lab, {
-      title: 'Training timeline — error on the four example days',
+      title: 'time machine: error on the four example days',
       onScrubStart: () => loop.pause(),
       onView: (st) => { Object.assign(s, st); for (const k of ['w1', 'w2', 'b']) sl[k].set(s[k]); update(); },
     });
@@ -207,22 +211,24 @@ export default {
       if (loop.playing || tl.length) {
         say.textContent = task === 'calm'
           ? (right_ === 4 ? 'Learned it. A single straight cut separates the beach day from the rest.' : 'Adjusting its weights by gradient descent…')
-          : (right_ === 4 ? 'Solved!' : `Stuck at ${right_}/4 — watch the timeline flatten out. No straight line can put both amber squares on one side and both dark squares on the other, so it hedges toward 50/50.`);
+          : (right_ === 4 ? 'Solved!' : `Stuck at ${right_}/4. Watch the time machine flatten out. No straight line can put both orange squares on one side and both empty squares on the other, so it hedges toward 50/50.`);
       } else {
         say.textContent = task === 'calm'
           ? 'Can you set the sliders so the neuron says yes only for the sunny, calm day? Or let it learn.'
-          : 'Now say yes when it\'s sunny or windy — but not both. Try it, then let it learn.';
+          : 'Now say yes when it\'s sunny or windy, but not both. Try it yourself first, then let it learn.';
       }
       map.draw();
     }
 
     root.append(h('div', { class: 'prose reveal', html: `
-      <p>The dashed line on the map is where the neuron changes its mind. Notice it is <strong>always straight</strong>, whatever
-      you do with the sliders: weights tilt it, the bias slides it. A single neuron is really just our line from chapter 1, wearing a costume.</p>
-      <p>The squashing step is called the <span class="term term--model">activation function</span>. "Sigmoid" gives a smooth 0-to-1 answer,
-      "step" a hard yes/no, and "ReLU" (short for <em>rectified linear unit</em>) simply cuts off anything negative — it's the most popular choice in modern networks.</p>
-      <p>On the tricky challenge, learning gets stuck no matter how long it runs. To bend that straight line, we need
-      to wire neurons <strong>together</strong>.</p>` }));
+      <p>The dashed line on the map is where the neuron changes its mind. Notice that it's <strong>always straight</strong>, whatever
+      you do with the sliders. The weights tilt it and the bias slides it around. A single neuron is really just our line from
+      chapter 1 wearing a costume.</p>
+      <p>The squashing step is called the <span class="term term--model">activation function</span>. "Sigmoid" gives a smooth answer
+      between 0 and 1, "step" gives a hard yes or no, and "ReLU" (short for <em>rectified linear unit</em>) simply chops off anything
+      negative. ReLU is the most popular choice in modern networks.</p>
+      <p>On the tricky puzzle, learning gets stuck no matter how long it runs. To bend that straight line we need to wire neurons
+      <strong>together</strong>, which is exactly what the next chapter does.</p>` }));
 
     update();
     (window.__ml ??= {}).ch3 = { state: s, get step() { return step; }, setTask: (k) => taskSeg.set(k, true), predictCorner, get playing() { return loop.playing; }, neuron, timeline: tl };

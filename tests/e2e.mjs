@@ -41,11 +41,14 @@ if (!only.length || only.includes('motion')) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
   const page = await ctx.newPage();
   await page.goto(URL, { waitUntil: 'networkidle' });
-  const hidden = await page.evaluate(() => [...document.querySelectorAll('.reveal')].filter((el) => getComputedStyle(el).opacity !== '1').length);
-  ok(hidden === 0, 'reveal animations are skipped');
-  const a = await page.locator('.hero canvas').screenshot();
+  await page.locator('#tab-a-single-neuron').click();
+  await page.locator('#a-single-neuron').waitFor();
+  const anim = await page.evaluate(() => getComputedStyle(document.getElementById('a-single-neuron')).animationName);
+  ok(anim === 'none', `page-turn animation is skipped (${anim})`);
+  await page.locator('#tab-start').click();
+  const a = await page.locator('#hero-plot canvas').screenshot();
   await page.waitForTimeout(800);
-  const b = await page.locator('.hero canvas').screenshot();
+  const b = await page.locator('#hero-plot canvas').screenshot();
   ok(a.equals(b), 'hero animation is paused');
   await ctx.close();
 }

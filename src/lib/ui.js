@@ -71,3 +71,14 @@ export function readout(label, kind = '') {
 export const fmtAuto = (v) => (!Number.isFinite(v) ? '∞' : Math.abs(v) >= 1e4 ? v.toExponential(1) : Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 1 ? v.toFixed(2) : v.toFixed(3));
 
 export const fmt = (v, d = 2) => (Number.isFinite(v) ? (Math.abs(v) >= 1e4 ? v.toExponential(1) : v.toFixed(d)) : '∞');
+
+/**
+ * A handwritten margin note with a scribbled arrow pointing down at whatever
+ * comes next, e.g. note('drag the little circles!').
+ */
+export function note(text, { right = false, ink = false } = {}) {
+  const el = h('p', { class: 'note' + (right ? ' note--right' : '') + (ink ? ' note--ink' : '') }, text);
+  el.insertAdjacentHTML(right ? 'afterbegin' : 'beforeend',
+    `<svg viewBox="0 0 46 40" aria-hidden="true" style="${right ? 'transform:scaleX(-1)' : ''}"><path d="M3 5 C 8 6, 14 9, 18 17 S 24 33, 33 34"/><path d="M25 29 L34 34 L28 40"/></svg>`);
+  return el;
+}

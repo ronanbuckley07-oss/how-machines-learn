@@ -1,6 +1,6 @@
 import { createLoop } from '../../lib/loop.js';
 import { createTimeline } from '../../lib/timeline.js';
-import { h, button, slider, readout } from '../../lib/ui.js';
+import { h, button, slider, readout, note } from '../../lib/ui.js';
 import { FABLES } from '../../ml/fables.js';
 import { tokenize, NGram, splitText } from '../../ml/ngram.js';
 import { makeRng } from '../../lib/rng.js';
@@ -14,6 +14,8 @@ const CHIPS = ['the fox', 'the lion was', 'slow and', 'a little', 'said the'];
 export default {
   id: 'next-word',
   title: 'How chatbots guess the next word',
+  tab: 'Next word',
+  blurb: 'Peek inside a (very) tiny chatbot',
   mount(root) {
     const { read, held } = splitText(FABLES);
     const vocab = [...new Set(tokenize(FABLES))];
@@ -23,11 +25,12 @@ export default {
     let temperature = 1;
 
     root.append(h('div', { class: 'prose reveal', html: `
-      <p>Chatbots like ChatGPT or Claude write one word at a time. Before each word, the model produces a list of
-      <strong>probabilities</strong> for what might come next, picks one, adds it to the text, and repeats.</p>
-      <p>Here is a tiny version of that idea. This model has read ten short fables (about 1,300 words) and simply
+      <p>Chatbots like ChatGPT or Claude write one word at a time. Before each word, the model comes up with a list of
+      <strong>probabilities</strong> for what might come next. It picks one, adds it to the text, and goes again.</p>
+      <p>Here's a tiny version of that idea. This model has read ten short fables (about 1,300 words) and simply
       <strong>counted</strong> which words tend to follow which. Type a few words and see what it expects next. Click a bar to add that word.</p>` }));
 
+    root.append(note('tap one of the yellow scraps to start'));
     const lab = h('div', { class: 'lab reveal' });
     root.append(lab);
     const gridEl = h('div', { class: 'lab__grid lab__grid--split' });
@@ -85,7 +88,7 @@ export default {
     loop.onChange((p) => readBtn.setLabel(p ? 'Pause' : k >= read.length ? 'Read from scratch' : 'Keep reading', p ? '❚❚' : '▶'));
 
     const tl = createTimeline(lab, {
-      title: 'Reading timeline — how unsure it is on unseen sentences',
+      title: 'time machine: how unsure it is, word by word',
       unit: 'word',
       series: [{ key: 'ppl', label: 'torn between', color: '--error' }],
       onScrubStart: () => loop.pause(),
@@ -156,16 +159,16 @@ export default {
     }
 
     root.append(h('div', { class: 'prose reveal', html: `
-      <p>Try <em>slow and</em> — it's almost certain the next word is "steady", because that's what it read. Try
-      <em>the lion was</em>, then roll the dice a few times. It sometimes writes things that sound right, and sometimes
-      wanders into nonsense, because it only ever looks at the last two words.</p>
-      <p>Scrub the reading timeline to the start: with nothing read, every word is equally likely. As it reads, it gets
-      steadily less surprised by sentences it has never seen. That is <span class="term term--learn">learning from data</span>, in its simplest form.</p>` }));
+      <p>Try <em>slow and</em>. It's almost certain the next word is "steady", because that's what it read. Then try <em>the lion was</em>
+      and roll the dice a few times. Sometimes it writes things that sound right, and sometimes it wanders off into nonsense,
+      because it only ever looks at the last two words.</p>
+      <p>Drag the time machine back to the start: with nothing read, every word is equally likely. As it reads, it gets steadily less
+      surprised by sentences it has never seen. That's <span class="term term--learn">learning from data</span> in its simplest form.</p>` }));
     root.append(h('div', { class: 'callout callout--honest reveal', html: `
       <strong>How this differs from a real chatbot.</strong> This is a word-counting toy called an <em>n-gram model</em>, and it can only
-      repeat word pairs it has literally seen. A large language model (LLM) is a huge neural network — billions of the weights you trained in
-      chapter 4 — that has read a large part of the internet. It works on pieces of words called <em>tokens</em>, can take thousands
-      of earlier words into account at once, and learns its predictions by gradient descent rather than counting.
+      repeat word pairs it has actually seen. A large language model (LLM) is a huge neural network, with billions of the weights you
+      trained in chapter 4, that has read a large part of the internet. It works on chunks of words called <em>tokens</em>, can take
+      thousands of earlier words into account at once, and learns by gradient descent rather than by counting.
       But the core job is the same one you see here: <strong>given the text so far, put a probability on every possible next token</strong>.` }));
 
     update();

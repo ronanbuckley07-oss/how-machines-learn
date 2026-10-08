@@ -1,7 +1,7 @@
-import { createPlot, scale, drawGrid, dot, onDrag, cssVar } from '../../lib/canvas.js';
+import { createPlot, scale, drawGrid, dot, onDrag, cssVar, HAND } from '../../lib/canvas.js';
 import { createLoop } from '../../lib/loop.js';
 import { createTimeline } from '../../lib/timeline.js';
-import { h, button, readout, fmt } from '../../lib/ui.js';
+import { h, button, readout, fmt, note } from '../../lib/ui.js';
 import { iceCreamData, LinearModel } from '../../ml/linear.js';
 import './chapter.css';
 
@@ -13,19 +13,23 @@ const STEPS_PER_SEC = 40;           // slow enough to watch each nudge
 export default {
   id: 'what-is-a-model',
   title: 'What is a model?',
+  tab: 'Models',
+  blurb: 'Fit a line by hand, then watch a computer do it',
   mount(root) {
     const data = iceCreamData();
     const model = new LinearModel(data);
     model.setThrough(HX1, 78, HX2, 34); // start deliberately wrong
 
     root.append(h('div', { class: 'prose reveal', html: `
-      <p>An ice-cream stand writes down two numbers every day: how hot it was, and how many cones it sold.
-      Each <span class="term term--data">amber dot</span> below is one day.</p>
-      <p>The owner wants to <strong>predict</strong> tomorrow's sales from tomorrow's weather forecast.
-      A simple way: draw a straight line through the dots, then read sales off the line.</p>
-      <p><strong>Try it.</strong> Drag the two handles on the <span class="term term--model">blue line</span> to fit the dots as well as you can.
-      The <span class="term term--error">red lines</span> show how far off your line is for each day — and the meter adds them all up.</p>` }));
+      <p>Picture an ice-cream stand. Every day the owner jots down two numbers: how hot it was, and how many cones they sold.
+      Each <span class="term term--data">orange dot</span> below is one of those days.</p>
+      <p>Tomorrow's forecast says 28°C. How many cones should they get ready? One simple approach is to draw a straight
+      line through the dots and read the answer off the line.</p>
+      <p><strong>Have a go.</strong> Grab the two round handles on the <span class="term term--model">blue line</span> and drag it until it
+      fits the dots as well as you can. The <span class="term term--error">red lines</span> show how far off you are on each day, and the
+      meter adds all of that up.</p>` }));
 
+    root.append(note('drag the little circles on the line!'));
     const lab = h('div', { class: 'lab reveal' });
     root.append(lab);
     const grid = h('div', { class: 'lab__grid lab__grid--split' });
@@ -61,7 +65,7 @@ export default {
         sy = scale(Y0, Y1, hgt - 26, 14);
         drawGrid(ctx, sx, sy, { xTicks: [10, 15, 20, 25, 30, 35], yTicks: [0, 25, 50, 75, 100], w, h: hgt });
         ctx.fillStyle = cssVar('--ink-3');
-        ctx.font = '11px Inter, sans-serif';
+        ctx.font = HAND(19);
         ctx.textAlign = 'right';
         ctx.fillText('temperature (°C) →', w - 14, hgt - 32);
         ctx.textAlign = 'left';
@@ -76,12 +80,12 @@ export default {
         ctx.globalAlpha = 1;
         // the model
         ctx.save();
-        ctx.strokeStyle = modelC; ctx.lineWidth = 3; ctx.shadowColor = modelC; ctx.shadowBlur = 14;
+        ctx.strokeStyle = modelC; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.moveTo(sx(X0), sy(model.predict(X0))); ctx.lineTo(sx(X1), sy(model.predict(X1))); ctx.stroke();
         ctx.restore();
-        for (const p of data) dot(ctx, sx(p.x), sy(p.y), 5, dataC, { glow: 8 });
+        for (const p of data) dot(ctx, sx(p.x), sy(p.y), 5, dataC);
 
-        // While the computer learns, violet arrows show where each handle will move next.
+        // While the computer learns, purple arrows show where each handle will move next.
         if (running && tl.live) {
           const na = model.a - LR * lastGrad[0] * 6, nc = model.c - LR * lastGrad[1] * 6;
           for (const hx of [HX1, HX2]) {
@@ -92,7 +96,7 @@ export default {
         for (const [hx, id] of [[HX1, 'h1'], [HX2, 'h2']]) {
           const px = sx(hx), py = sy(model.predict(hx));
           ctx.beginPath(); ctx.arc(px, py, dragging === id ? 13 : 11, 0, Math.PI * 2);
-          ctx.fillStyle = cssVar('--bg'); ctx.fill();
+          ctx.fillStyle = cssVar('--card'); ctx.fill();
           ctx.lineWidth = 3; ctx.strokeStyle = modelC; ctx.stroke();
           ctx.beginPath(); ctx.arc(px, py, 3.5, 0, Math.PI * 2); ctx.fillStyle = modelC; ctx.fill();
         }
@@ -100,13 +104,13 @@ export default {
     });
     plot.canvas.setAttribute('role', 'img');
     plot.canvas.setAttribute('aria-label', 'Scatter plot of temperature against cones sold, with a draggable straight line.');
-    const hint = h('div', { class: 'plot__hint ch1-hint' }, 'drag the ◯ handles');
+    const hint = h('div', { class: 'plot__hint ch1-hint' }, 'grab a handle');
     plot.wrap.append(hint);
 
     function arrow(ctx, x, y0, y1, col) {
       const dir = Math.sign(y1 - y0);
       ctx.save();
-      ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2.5; ctx.shadowColor = col; ctx.shadowBlur = 10;
+      ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2.5;
       ctx.beginPath(); ctx.moveTo(x + 18, y0); ctx.lineTo(x + 18, y1 - dir * 6); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(x + 18, y1); ctx.lineTo(x + 12, y1 - dir * 9); ctx.lineTo(x + 24, y1 - dir * 9); ctx.closePath(); ctx.fill();
       ctx.restore();
@@ -147,7 +151,7 @@ export default {
           model.setThrough(HX1, y1 + dy, HX2, y2 + dy);
         }
         userBest = Math.min(userBest, model.loss());
-        say.textContent = 'Keep going — can you get the error lower?';
+        say.textContent = 'Keep going. Can you get the error lower?';
         update();
       },
       up() { dragging = null; plot.canvas.style.cursor = ''; update(); },
@@ -172,8 +176,8 @@ export default {
         running = false;
         const best = model.loss();
         say.innerHTML = `Done after <strong>${step}</strong> small steps. Computer's error: <strong style="color:var(--error)">${fmt(best, 0)}</strong>` +
-          (Number.isFinite(userBest) ? ` — yours was <strong style="color:var(--data)">${fmt(userBest, 0)}</strong>.` : '.') +
-          ' Scrub the timeline to watch how it got there.';
+          (Number.isFinite(userBest) ? `. Yours was <strong style="color:var(--data)">${fmt(userBest, 0)}</strong>.` : '.') +
+          ' Drag the time machine below to watch how it got there.';
         update();
         return false;
       }
@@ -204,23 +208,21 @@ export default {
     right.append(h('div', { class: 'controls' }, goBtn, resetBtn));
 
     const tl = createTimeline(lab, {
-      title: 'Training timeline — error over time',
+      title: 'time machine: drag to rewind the training',
       onScrubStart: () => loop.pause(),
       onView: (s) => { model.a = s.a; model.c = s.c; update(); },
     });
 
     root.append(h('div', { class: 'prose reveal', html: `
-      <p>That line is a <span class="term term--model">model</span>: a simple rule that turns something we know
-      (temperature) into a guess about something we don't (sales). The amber dots are its
-      <span class="term term--data">training data</span>.</p>
-      <p>The number on the meter is the model's <span class="term term--error">error</span>. We measure each red miss,
-      square it (so big misses count a lot more than small ones), and average them. Statisticians call this the
-      <em>mean squared error</em>.</p>
-      <p>When you pressed the button, the computer didn't "see" the answer. It started from your line and
-      repeatedly asked one question: <strong>which small nudge makes the error go down?</strong> The violet arrows
-      showed that nudge. Scrub the timeline back to the start and you can watch it happen frame by frame.</p>` }));
+      <p>That line is a <span class="term term--model">model</span>. It's a rule that turns something we know (the temperature) into a
+      guess about something we don't (sales). The dots it was fitted to are its <span class="term term--data">training data</span>.</p>
+      <p>The number on the meter is the model's <span class="term term--error">error</span>. We measure each red miss, square it so big
+      misses count for a lot more than small ones, then take the average. If you want the official name, it's the <em>mean squared error</em>.</p>
+      <p>Notice that the computer never "saw" the answer. It started from your line and kept asking one question:
+      <strong>which tiny nudge makes the error smaller?</strong> The purple arrows were that nudge. Drag the time machine back to the
+      start and you can watch it happen frame by frame.</p>` }));
     root.append(h('div', { class: 'callout reveal', html:
-      '<strong>In one sentence:</strong> machine learning is choosing a model, measuring how wrong it is, and adjusting it step by step to be less wrong.' }));
+      '<strong>The whole idea, on a sticky note:</strong> pick a model, measure how wrong it is, nudge it to be a little less wrong. Repeat. That really is most of machine learning.' }));
 
     update();
     // Read-only hook for the automated checks in tests/e2e.mjs.

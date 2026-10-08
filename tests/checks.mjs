@@ -1,12 +1,22 @@
 // Per-chapter checks used by e2e.mjs. Each receives (page, ok, viewport).
+
+/** Switch to a chapter's tab the way a reader would (clicking it) and return its panel. */
+async function openTab(page, id) {
+  await page.locator(`#tab-${id}`).click();
+  const sec = page.locator(`#${id}`);
+  await sec.waitFor({ state: 'visible' });
+  await page.waitForTimeout(300);
+  return sec;
+}
 const shot = (page, sel, name) => page.locator(sel).screenshot({ path: `shots/${name}.png` });
 
 const checks = {
   async ch1(page, ok, vp) {
-    const sec = page.locator('#what-is-a-model');
-    await sec.scrollIntoViewIfNeeded();
+    const sec = await openTab(page, 'what-is-a-model');
     await page.waitForTimeout(900);
     const canvas = sec.locator('.plot canvas').first();
+    await canvas.evaluate((el) => el.scrollIntoView({ block: 'center' }));
+    await page.waitForTimeout(200);
     const box = await canvas.boundingBox();
     const before = await page.evaluate(() => window.__ml.ch1.model.loss());
 
@@ -47,8 +57,7 @@ const checks = {
 };
 
 checks.ch2 = async (page, ok, vp) => {
-  const sec = page.locator('#getting-less-wrong');
-  await sec.scrollIntoViewIfNeeded();
+  const sec = await openTab(page, 'getting-less-wrong');
   await page.waitForTimeout(500);
   const get = () => page.evaluate(() => { const c = window.__ml.ch2; const o = c.model.optimum(); return { a: c.model.a, opt: o.a, status: c.status, step: c.step, loss: c.model.loss(c.model.a, 0), best: c.model.loss(o.a, 0) }; });
 
@@ -86,8 +95,7 @@ checks.ch2 = async (page, ok, vp) => {
 };
 
 checks.ch3 = async (page, ok, vp) => {
-  const sec = page.locator('#a-single-neuron');
-  await sec.scrollIntoViewIfNeeded();
+  const sec = await openTab(page, 'a-single-neuron');
   await page.waitForTimeout(400);
   const out = () => sec.locator('.neuron-svg .node--out + text').textContent();
   const before = await out();
@@ -113,8 +121,7 @@ checks.ch3 = async (page, ok, vp) => {
 };
 
 checks.ch4 = async (page, ok, vp) => {
-  const sec = page.locator('#a-neural-network');
-  await sec.scrollIntoViewIfNeeded();
+  const sec = await openTab(page, 'a-neural-network');
   await page.waitForTimeout(400);
   const run = async (dataset, neurons, layers) => {
     await sec.getByRole('button', { name: dataset }).click();
@@ -145,8 +152,7 @@ checks.ch4 = async (page, ok, vp) => {
 };
 
 checks.ch5 = async (page, ok, vp) => {
-  const sec = page.locator('#memorizing-vs-learning');
-  await sec.scrollIntoViewIfNeeded();
+  const sec = await openTab(page, 'memorizing-vs-learning');
   await page.waitForTimeout(400);
   const setDeg = (d) => sec.getByRole('slider', { name: 'Complexity' }).evaluate((el, v) => { el.value = v; el.dispatchEvent(new Event('input', { bubbles: true })); }, d);
   const at = (d) => page.evaluate((d) => window.__ml.ch5.sweep[d], d);
@@ -169,8 +175,7 @@ checks.ch5 = async (page, ok, vp) => {
 };
 
 checks.ch6 = async (page, ok, vp) => {
-  const sec = page.locator('#next-word');
-  await sec.scrollIntoViewIfNeeded();
+  const sec = await openTab(page, 'next-word');
   await page.waitForTimeout(300);
   const input = sec.getByRole('textbox', { name: 'Your words' });
   await input.fill('slow and');
@@ -200,20 +205,37 @@ checks.ch6 = async (page, ok, vp) => {
 };
 
 checks.page = async (page, ok, vp) => {
-  // Scroll the whole page like a reader: every reveal block must become visible.
-  await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; window.scrollTo(0, 0); });
+  const ids = await page.locator('.tabs [role=tab]').evaluateAll((els) => els.map((e) => e.getAttribute('aria-controls')));
+  ok(ids.length === 8, `8 tabs: ${ids.join(', ')}`);
+  for (const id of ids) {
+    await page.locator(`#tab-${id}`).click();
+    await page.waitForTimeout(250);
+    const r = await page.evaluate((id) => ({
+      visible: [...document.querySelectorAll('[role=tabpanel]')].filter((p) => !p.hidden).map((p) => p.id),
+      selected: document.querySelector('[aria-selected=true]').getAttribute('aria-controls'),
+      overflow: document.documentElement.scrollWidth - innerWidth,
+      hash: location.hash,
+    }), id);
+    ok(r.visible.length === 1 && r.visible[0] === id && r.selected === id && r.hash === '#' + id && r.overflow <= 0,
+      `tab "${id}" shows only its own page (overflow ${r.overflow}px)`);
+  }
+  // Back button returns to the previous tab.
+  await page.goBack();
   await page.waitForTimeout(200);
-  const h = await page.evaluate(() => document.body.scrollHeight);
-  for (let y = 0; y < h; y += 400) { await page.evaluate((y) => window.scrollTo(0, y), y); await page.waitForTimeout(40); }
-  await page.waitForTimeout(1000);
-  const hiddenEls = await page.evaluate(() => [...document.querySelectorAll('.reveal')].filter((el) => getComputedStyle(el).opacity !== '1').map((el) => `${el.closest('section')?.id}:${el.className}:${getComputedStyle(el).opacity}`));
-  const hidden = hiddenEls.length;
-  ok(hidden === 0, `every section is revealed while scrolling (${hidden} hidden) ${hidden ? JSON.stringify(hiddenEls) : ''} scrollY=${await page.evaluate(() => scrollY)}`);
-  const ids = await page.evaluate(() => [...document.querySelectorAll('main section')].map((s) => s.id));
-  ok(ids.length === 7, `all 7 chapters mounted (${ids.join(', ')})`);
+  ok(await page.evaluate(() => location.hash) === '#' + ids[ids.length - 2], 'browser back goes to the previous tab');
+  // "next up" link at the bottom of a chapter moves to the next one.
+  await page.locator('#tab-what-is-a-model').click();
+  await page.locator('#what-is-a-model .pager .next').click();
+  await page.waitForTimeout(200);
+  ok(await page.evaluate(() => location.hash) === '#getting-less-wrong', 'the "next up" link opens the next chapter');
   if (vp.name === 'phone') {
-    const small = await page.evaluate(() => [...document.querySelectorAll('button, input[type=range], .chip, .bar')]
-      .filter((el) => el.offsetParent && el.getBoundingClientRect().height < 36).map((el) => el.textContent || el.getAttribute('aria-label')));
+    const small = [];
+    for (const id of ids) {
+      await page.locator(`#tab-${id}`).click();
+      await page.waitForTimeout(150);
+      small.push(...await page.evaluate(() => [...document.querySelectorAll('button, input[type=range], .chip, .bar, .tab')]
+        .filter((el) => el.offsetParent && el.getBoundingClientRect().height < 36).map((el) => el.textContent || el.getAttribute('aria-label'))));
+    }
     ok(small.length === 0, `touch targets are at least 36px tall ${small.length ? JSON.stringify(small.slice(0, 5)) : ''}`);
   }
 };

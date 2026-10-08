@@ -1,36 +1,39 @@
-/* Design tokens. The color language is shared by every chapter:
-   data = amber, model = cyan, error = coral, learning = violet. */
+/* A paper field-notebook. Inks keep one meaning everywhere:
+   data = burnt orange, model = cobalt, error = tomato, learning = violet. */
 :root {
-  --bg: #0b0f17;
-  --bg-raised: #121826;
-  --bg-inset: #0e1420;
-  --line: #222b3d;
-  --line-strong: #33405a;
-  --grid: rgba(140, 160, 200, 0.07);
+  --paper: #f6f0e1;
+  --paper-2: #efe6d0;      /* slightly darker paper for panels */
+  --card: #fbf7ec;
+  --ink: #22201c;
+  --ink-2: #4a453c;
+  --ink-3: #847b6b;
+  --rule: #d9cfb8;
+  --rule-strong: #b9ac8f;
+  --grid: rgba(34, 32, 28, 0.07);
 
-  --ink: #e8ecf4;
-  --ink-2: #aab3c5;
-  --ink-3: #6f7a90;
+  --data: #c46a00;
+  --data-2: #00927f;       /* the second group of points in chapter 4 */
+  --model: #1f4fd1;
+  --error: #d63a2a;
+  --learn: #7b3fbf;
+  --highlight: #ffe17a;    /* highlighter pen */
 
-  --data: #f5b544;
-  --data-2: #4fd1a5;      /* second class of data (teal-green) */
-  --model: #4de2ff;
-  --error: #ff5d73;
-  --learn: #a78bfa;
+  /* older names still used by chapter styles */
+  --bg: #fffdf6;
+  --bg-inset: #fffdf6;
+  --bg-raised: #fbf7ec;
+  --line: #d9cfb8;
+  --line-strong: #b9ac8f;
 
-  --data-glow: rgba(245, 181, 68, 0.35);
-  --model-glow: rgba(77, 226, 255, 0.4);
-  --error-glow: rgba(255, 93, 115, 0.35);
-  --learn-glow: rgba(167, 139, 250, 0.4);
+  --font-display: 'Young Serif', Georgia, serif;
+  --font-body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --font-hand: 'Caveat', 'Comic Sans MS', cursive;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
 
-  --font-display: 'Fraunces', Georgia, serif;
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
-
-  --radius: 14px;
-  --radius-sm: 8px;
-  --measure: 40rem;
-  --wide: 68rem;
+  --radius: 8px;
+  --radius-sm: 6px;
+  --measure: 38rem;
+  --wide: 70rem;
   --gutter: clamp(16px, 4vw, 40px);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }

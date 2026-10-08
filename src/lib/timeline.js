@@ -1,4 +1,4 @@
-import { createPlot, onDrag, cssVar } from './canvas.js';
+import { createPlot, onDrag, cssVar, HAND, MONO_SMALL } from './canvas.js';
 import { h, button, slider, fmtAuto } from './ui.js';
 import { reducedMotion } from './motion.js';
 
@@ -77,12 +77,12 @@ export function createTimeline(container, {
   }
 
   function draw(ctx, w, hgt) {
-    ctx.fillStyle = 'rgba(140,160,200,0.05)';
+    ctx.fillStyle = 'rgba(34,32,28,0.2)';
     ctx.fillRect(0, hgt - PAD_B, w, 1);
     if (entries.length < 1) {
       ctx.fillStyle = cssVar('--ink-3');
-      ctx.font = '12px Inter, sans-serif';
-      ctx.fillText('Press play to start the clock — every moment of training is recorded here.', PAD_L + 4, hgt / 2 + 4);
+      ctx.font = HAND(20);
+      ctx.fillText(w < 420 ? 'press play to start recording' : 'press play and every moment of training gets recorded here', PAD_L + 4, hgt / 2 + 4);
       return;
     }
     const firstStep = entries[0].step, lastStep = entries[entries.length - 1].step;
@@ -105,9 +105,7 @@ export function createTimeline(container, {
       ctx.setLineDash(s.dash ? [5, 4] : []);
       ctx.lineWidth = 2;
       ctx.lineJoin = 'round';
-      ctx.shadowColor = col; ctx.shadowBlur = 8;
       ctx.stroke();
-      ctx.shadowBlur = 0;
       ctx.setLineDash([]);
     }
     // cursor
@@ -119,11 +117,11 @@ export function createTimeline(container, {
     ctx.beginPath(); ctx.moveTo(cx, PAD_T - 4); ctx.lineTo(cx, hgt - PAD_B); ctx.stroke();
     for (const s of series) {
       ctx.beginPath(); ctx.arc(cx, Y(e.values[s.key]), 4.5, 0, Math.PI * 2);
-      ctx.fillStyle = cssVar('--bg'); ctx.fill();
+      ctx.fillStyle = cssVar('--card'); ctx.fill();
       ctx.lineWidth = 2; ctx.strokeStyle = cssVar(s.color); ctx.stroke();
     }
     ctx.fillStyle = cssVar('--ink-3');
-    ctx.font = '10px "JetBrains Mono", monospace';
+    ctx.font = MONO_SMALL;
     ctx.textAlign = 'left'; ctx.fillText(firstStep.toLocaleString(), PAD_L, hgt - 3);
     ctx.textAlign = 'right'; ctx.fillText(`${lastStep.toLocaleString()} ${unit}s`, w - PAD_R, hgt - 3);
     ctx.textAlign = 'left';

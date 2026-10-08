@@ -34,6 +34,8 @@ export function createPlot(container, { aspect = 0.62, min = 220, max = 560, fil
 
   new ResizeObserver(resize).observe(wrap);
   resize();
+  // Canvas text can't swap fonts by itself: redraw once the web fonts have arrived.
+  document.fonts?.ready.then(() => plot.draw());
   return plot;
 }
 
@@ -49,9 +51,9 @@ export function scale(d0, d1, r0, r1) {
 export function drawGrid(ctx, sx, sy, { xTicks = [], yTicks = [], w, h, labels = true } = {}) {
   ctx.save();
   ctx.lineWidth = 1;
-  ctx.strokeStyle = 'rgba(140,160,200,0.08)';
-  ctx.fillStyle = 'rgba(170,180,200,0.55)';
-  ctx.font = '11px "JetBrains Mono", monospace';
+  ctx.strokeStyle = 'rgba(34,32,28,0.08)';
+  ctx.fillStyle = 'rgba(34,32,28,0.5)';
+  ctx.font = MONO_SMALL;
   for (const x of xTicks) {
     const px = Math.round(sx(x)) + 0.5;
     ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, h); ctx.stroke();
@@ -67,15 +69,16 @@ export function drawGrid(ctx, sx, sy, { xTicks = [], yTicks = [], w, h, labels =
 
 const fmtTick = (v) => (Math.abs(v) >= 1000 ? (v / 1000) + 'k' : String(+v.toFixed(2)));
 
-/** Glowing dot. */
-export function dot(ctx, x, y, r, color, { glow = 10, hollow = false } = {}) {
+/** A dot drawn like a felt-tip mark: solid ink with a thin dark rim (or a hollow ring). */
+export function dot(ctx, x, y, r, color, { hollow = false } = {}) {
   ctx.save();
-  ctx.shadowColor = color;
-  ctx.shadowBlur = glow;
   ctx.beginPath();
   ctx.arc(x, y, r, 0, Math.PI * 2);
   if (hollow) { ctx.lineWidth = 2; ctx.strokeStyle = color; ctx.stroke(); }
-  else { ctx.fillStyle = color; ctx.fill(); }
+  else {
+    ctx.fillStyle = color; ctx.fill();
+    ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(34,32,28,0.55)'; ctx.stroke();
+  }
   ctx.restore();
 }
 
@@ -108,6 +111,23 @@ export function onDrag(el, { down, move, up, hover } = {}) {
   };
   el.addEventListener('pointerup', end);
   el.addEventListener('pointercancel', end);
+}
+
+/** Fonts for text drawn on canvases. */
+export const HAND = (px = 19) => `${px}px Caveat, "Comic Sans MS", cursive`;
+export const MONO_SMALL = '11px "IBM Plex Mono", monospace';
+
+/** A colour from tokens.css with transparency, e.g. withAlpha('--error', 0.2). */
+export function withAlpha(name, a) {
+  const [r, g, b] = cssRgb(name);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+/** A colour from tokens.css as [r, g, b] (0–255). */
+export function cssRgb(name) {
+  const hex = cssVar(name).replace('#', '');
+  const n = parseInt(hex.length === 3 ? hex.replace(/./g, '$&$&') : hex, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
 /** Read a CSS custom property (colors live in tokens.css, not in JS). */

@@ -15,7 +15,7 @@ const GLOSSARY = [
 ];
 
 const SIMPLIFIED = [
-  ['Real data has many more dimensions.', 'Our examples had one or two inputs so we could draw them. A photo has millions of pixels, so its error landscape has millions of directions — impossible to picture, but the same downhill recipe works.'],
+  ['Real data has many more dimensions.', 'Our examples had one or two inputs so we could draw them. A photo has millions of pixels, so its error landscape has millions of directions. That\'s impossible to picture, but the same downhill recipe still works.'],
   ['Real models are enormous.', 'Your biggest network here had about a hundred weights. Modern image and language models have millions to hundreds of billions, and train for weeks on specialised chips.'],
   ['The step-taking is fancier.', 'Real training looks at small random batches of data per step and uses smarter optimizers (with names like Adam) that adapt the step size for each weight. The heart of it is still gradient descent.'],
   ['Overfitting has more cures.', 'Besides more data, practitioners use tricks like stopping training early, randomly switching off neurons ("dropout"), and penalising extreme weights ("regularization").'],
@@ -27,20 +27,22 @@ const LINKS = [
   ['A visual introduction to machine learning', 'http://www.r2d3.us/visual-intro-to-machine-learning-part-1/', 'A beautiful scrolling story about how a model learns to tell cities apart.', 'no maths'],
   ['TensorFlow Playground', 'https://playground.tensorflow.org/', 'A bigger version of chapter 4: build and train networks in your browser.', 'hands-on'],
   ['3Blue1Brown: Neural networks', 'https://www.3blue1brown.com/topics/neural-networks', 'Gorgeous animated videos on networks, gradient descent, backpropagation and transformers.', 'videos'],
-  ['Neural Networks and Deep Learning', 'http://neuralnetworksanddeeplearning.com/', 'Michael Nielsen\'s free online book — the next step if you enjoyed the maths underneath.', 'book'],
-  ['Neural Networks: Zero to Hero', 'https://karpathy.ai/zero-to-hero.html', 'Andrej Karpathy builds networks — up to a small GPT — from scratch, in code.', 'for coders'],
+  ['Neural Networks and Deep Learning', 'http://neuralnetworksanddeeplearning.com/', 'Michael Nielsen\'s free online book. The natural next step if you enjoyed the maths underneath.', 'book'],
+  ['Neural Networks: Zero to Hero', 'https://karpathy.ai/zero-to-hero.html', 'Andrej Karpathy builds networks from scratch in code, all the way up to a small GPT.', 'for coders'],
 ];
 
 export default {
   id: 'where-next',
-  kicker: 'Epilogue',
-  title: 'What you\'ve learned, and where to go next',
+  kicker: 'the end (sort of)',
+  tab: 'What next',
+  blurb: 'Your new vocabulary, and where to go from here',
+  title: 'What you\'ve learned',
   mount(root) {
     root.append(h('div', { class: 'prose reveal', html: `
       <p>In a few minutes you fitted a line by hand, rolled a ball down an error landscape, wired up a neuron, watched a
       network carve out spirals, caught a model memorizing, and trained a tiny text predictor. Every one of those was the real
-      thing, computed live — just small enough to see.</p>
-      <p>Here is the vocabulary you picked up along the way. Click any term to jump back to where you met it.</p>` }));
+      thing, computed live. They were just small enough to see.</p>
+      <p>Here is the vocabulary you picked up along the way. Tap any card to jump back to where you met it.</p>` }));
 
     root.append(h('div', { class: 'glossary reveal' }, GLOSSARY.map(([role, term, def, id]) =>
       h('a', { class: `gloss gloss--${role}`, href: `#${id}` }, h('span', { class: 'gloss__term' }, term), h('span', { class: 'gloss__def' }, def)))));

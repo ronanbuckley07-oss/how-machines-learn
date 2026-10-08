@@ -1,7 +1,7 @@
 # How Machines Learn — an explorable explanation
 
-A single scrolling page that teaches how machine learning works to people with
-no technical background. Readers learn by dragging, sliding and watching real
+A small tabbed site, styled like a paper field notebook, that teaches how
+machine learning works to people with no technical background. Readers learn by dragging, sliding and watching real
 models train. **Nothing is pre-recorded**: every loss, gradient, prediction and
 training run is computed live in the browser, in plain JavaScript.
 
@@ -17,7 +17,7 @@ training run is computed live in the browser, in plain JavaScript.
 
 ### The time element
 
-Every chapter that learns has a **timeline** under it (`src/lib/timeline.js`).
+Every chapter that learns has a **time machine** under it (`src/lib/timeline.js`).
 While a model trains, real snapshots of its parameters are recorded along with
 the error. The reader can:
 
@@ -60,7 +60,8 @@ and phone (375px) widths. It drags handles, moves sliders and presses play,
 then asserts real outcomes: gradient descent reaches the exact least-squares
 line, a too-large learning rate diverges, the network classifies every point,
 test error rises with complexity and falls with more data, scrubbing the
-timeline restores earlier models. It also checks there's no horizontal scroll,
+timeline restores earlier models. It also clicks through every tab (each shows only
+its own page, back button and "next up" links work), checks there's no horizontal scroll,
 no console errors, that touch targets are large enough, and that
 `prefers-reduced-motion` is respected. Screenshots go to `shots/`.
 
@@ -97,8 +98,8 @@ Static sites on Render don't sleep, unlike the free Node web services.
 how-machines-learn/
   index.html               page shell, hero, colour key
   src/
-    main.js                mounts chapters in order + scroll reveals
-    hero.js                live background: a small network fitting drifting data
+    main.js                tabs + hash routing; builds each chapter the first time it's opened
+    hero.js                the cover's polaroid: a small network fitting drifting data, live
     styles/                tokens.css (colours, type), base.css, controls.css
     lib/
       timeline.js          the shared training timeline (record / scrub / replay / rewind)
@@ -118,10 +119,14 @@ how-machines-learn/
 
 ### Adding or reordering chapters
 
-Each chapter exports `{ id, title, mount(element) }` (and optionally `kicker`).
-Add a folder under `src/chapters/`, then add it to the `chapters` array in
-`src/main.js`. The order of that array is the order on the page, and chapter
-numbers are assigned automatically.
+Each chapter exports `{ id, title, tab, blurb, mount(element) }` (and optionally
+`kicker`). `tab` is the short label on its notebook tab, `blurb` its line in the
+cover's contents list, and `id` becomes its link (`/#what-is-a-model`). Add a
+folder under `src/chapters/`, then add it to the `chapters` array in
+`src/main.js`. The order of that array is the order of the tabs, and chapter
+numbers are assigned automatically. Pages are built the first time their tab is
+opened and then kept, so experiments survive switching tabs; training loops
+pause while their tab is hidden.
 
 To give a new chapter a timeline:
 
@@ -136,14 +141,21 @@ const past = tl.rewindHere();                   // on play: resume from the past
 
 ## Design notes
 
+- **Look:** a paper field notebook. Cream graph paper, ink-outlined panels with a
+  hard offset shadow, Young Serif headings, Atkinson Hyperlegible body text,
+  Caveat for handwritten margin notes and chart labels, IBM Plex Mono for
+  numbers. Charts are flat ink, no glows.
 - **Colour language** (in `src/styles/tokens.css`), the same in every chapter:
-  amber = data, cyan = the model, coral = error, violet = learning / the next
-  step. Positive weights are cyan, negative weights coral. The two classes in
-  chapter 4 use both colour *and* shape (circles vs. triangles).
-- Training loops do a little work per animation frame and pause when the
-  chapter is off screen, so the page never freezes.
-- With `prefers-reduced-motion`, scroll reveals and the hero animation are off;
-  nothing auto-plays, and replays jump instead of animating.
+  orange = data, blue = the model, red = error, purple = learning / the next
+  step. Positive weights are blue, negative weights red. The two groups in
+  chapter 4 use colour *and* shape (orange circles vs. green triangles). The
+  palette was checked for colour-blind separation and contrast on the paper colour.
+- **Tabs:** one notebook tab per chapter plus a cover. Each tab has its own URL,
+  so links, bookmarks and the back button work; arrow keys move between tabs.
+- Training loops do a little work per animation frame and pause when their
+  chapter is hidden or off screen, so the page never freezes.
+- With `prefers-reduced-motion`, page-turn animations and the cover animation
+  are off; nothing auto-plays, and replays jump instead of animating.
 
 ## Credits
 

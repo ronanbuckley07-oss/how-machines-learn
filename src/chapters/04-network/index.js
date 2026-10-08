@@ -1,7 +1,7 @@
-import { createPlot, scale, cssVar } from '../../lib/canvas.js';
+import { createPlot, scale, cssVar, MONO_SMALL, cssRgb } from '../../lib/canvas.js';
 import { createLoop } from '../../lib/loop.js';
 import { createTimeline } from '../../lib/timeline.js';
-import { h, button, slider, segmented, readout, fmt } from '../../lib/ui.js';
+import { h, button, slider, segmented, readout, fmt, note } from '../../lib/ui.js';
 import { MLP } from '../../ml/mlp.js';
 import { DATASETS } from '../../ml/datasets.js';
 import './chapter.css';
@@ -13,18 +13,21 @@ const MAX_STEPS = 6000;
 export default {
   id: 'a-neural-network',
   title: 'A neural network',
+  tab: 'Network',
+  blurb: 'Train a network to untangle spirals',
   mount(root) {
     const cfg = { dataset: 'xor', hidden: 4, layers: 1, lr: 0.3, seed: 1 };
     let data, X, Y, net, step = 0, grid, done = false, checkpoints = [];
 
     root.append(h('div', { class: 'prose reveal', html: `
-      <p>One neuron draws one straight line. So let's use <strong>several</strong> neurons, each drawing its own line, and feed
-      their answers into a final neuron that combines them. That's a <span class="term term--model">neural network</span>.</p>
-      <p>Below, each dot is a <span class="term term--data">data point</span> from one of two groups — amber circles or green triangles.
-      The network has to learn which group any spot on the map belongs to. The background shows its current guess, and the
-      <span class="term term--model">glowing line</span> is where it changes its mind. "Four corners" is the tricky puzzle from the last chapter.</p>
+      <p>One neuron draws one straight line. So let's use <strong>several</strong> neurons, each drawing its own line, and feed their
+      answers into one final neuron that combines them. That's a <span class="term term--model">neural network</span>.</p>
+      <p>Each mark below is a <span class="term term--data">data point</span> from one of two groups: orange circles and green triangles.
+      The network has to learn which group any spot on the map belongs to. The shading shows its current guess, and the
+      <span class="term term--model">dark line</span> is where it changes its mind. "Four corners" is the tricky puzzle from the last chapter.</p>
       <p>Press play and watch the boundary form.</p>` }));
 
+    root.append(note('after this, try Spirals with 4 neurons... then 8', { right: true }));
     const lab = h('div', { class: 'lab reveal' });
     root.append(lab);
     const gridEl = h('div', { class: 'lab__grid lab__grid--split' });
@@ -45,10 +48,10 @@ export default {
         if (!grid) return;
         const sx = scale(-1.1, 1.1, 0, w), sy = scale(-1.1, 1.1, hgt, 0);
         // background: the network's prediction everywhere
-        const A = [245, 181, 68], B = [79, 209, 165], base = [14, 20, 32];
+        const A = cssRgb('--data'), B = cssRgb('--data-2'), base = cssRgb('--bg');
         for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
           const p = grid.out[j * G + i];
-          const k = Math.min(1, Math.abs(p - 0.5) * 2) * 0.5;
+          const k = Math.min(1, Math.abs(p - 0.5) * 2) * 0.32;
           const c = p >= 0.5 ? B : A;
           const o = ((G - 1 - j) * G + i) * 4;
           img.data[o] = base[0] + (c[0] - base[0]) * k;
@@ -63,7 +66,7 @@ export default {
         // decision boundary (p = 0.5) via marching squares
         const model = cssVar('--model');
         ctx.save();
-        ctx.strokeStyle = model; ctx.lineWidth = 2.5; ctx.shadowColor = model; ctx.shadowBlur = 12;
+        ctx.strokeStyle = model; ctx.lineWidth = 2.5;
         ctx.beginPath();
         contour(grid.out, G, 0.5, (x0, y0, x1, y1) => {
           ctx.moveTo(sx(toWorld(x0)), sy(toWorld(y0)));
@@ -72,11 +75,11 @@ export default {
         ctx.stroke();
         ctx.restore();
         // points: shape + colour encode the group
-        const ca = cssVar('--data'), cb = cssVar('--data-2'), bg = cssVar('--bg');
+        const ca = cssVar('--data'), cb = cssVar('--data-2'), bg = cssVar('--ink');
         for (const p of data) {
           const x = sx(p.x[0]), y = sy(p.x[1]);
           const wrong = (net.predict1(p.x) >= 0.5 ? 1 : 0) !== p.y;
-          ctx.lineWidth = 1.5; ctx.strokeStyle = wrong ? '#fff' : bg;
+          ctx.lineWidth = wrong ? 2.5 : 1; ctx.strokeStyle = wrong ? cssVar('--error') : bg;
           ctx.beginPath();
           if (p.y) { ctx.moveTo(x, y - 5.5); ctx.lineTo(x + 5, y + 3.5); ctx.lineTo(x - 5, y + 3.5); ctx.closePath(); ctx.fillStyle = cb; }
           else { ctx.arc(x, y, 4.2, 0, Math.PI * 2); ctx.fillStyle = ca; }
@@ -85,7 +88,7 @@ export default {
       },
     });
     map.canvas.setAttribute('role', 'img');
-    map.canvas.setAttribute('aria-label', 'Two groups of points with the network\'s predicted regions shaded behind them and its decision boundary drawn as a glowing line.');
+    map.canvas.setAttribute('aria-label', 'Two groups of points with the network\'s predicted regions shaded behind them and its decision boundary drawn as a dark line.');
 
     // ---------- side: readouts + network diagram ----------
     const stepOut = readout('Step', 'learn'), lossOut = readout('Error', 'error'), accOut = readout('Accuracy', 'model');
@@ -110,7 +113,7 @@ export default {
       h('div', { class: 'controls' }, layerSeg.el, hiddenSl.el, lrSl.el));
 
     const tl = createTimeline(lab, {
-      title: 'Training timeline — error over time',
+      title: 'time machine: drag to rewind the training',
       maxPoints: 300,
       onScrubStart: () => loop.pause(),
       onView: (st) => { net.setState(st); refresh(); },
@@ -181,7 +184,7 @@ export default {
       const params = net.paramCount;
       if (!tl.live) say.textContent = 'Looking back in time. Scrub to watch the boundary change, or press play to continue training from this moment.';
       else if (done && acc === 1) say.textContent = `Every point classified correctly after ${step.toLocaleString()} steps, using ${params} adjustable numbers.`;
-      else if (done) say.textContent = `Gave up at ${Math.round(acc * 100)}% after ${step.toLocaleString()} steps. This network is too small for this pattern — try more neurons or another layer.`;
+      else if (done) say.textContent = `Gave up at ${Math.round(acc * 100)}% after ${step.toLocaleString()} steps. This network is too small for this pattern. Try more neurons or another layer.`;
       else if (step === 0) say.textContent = `${params} weights and biases, all random. Press play to train.`;
       else say.textContent = 'Training: every step nudges all the weights a little downhill on the error landscape.';
       map.draw();
@@ -216,9 +219,9 @@ export default {
       }
       ctx.globalAlpha = 1;
       // inputs
-      ctx.font = '11px "JetBrains Mono", monospace'; ctx.textAlign = 'center';
+      ctx.font = MONO_SMALL; ctx.textAlign = 'center';
       ys[0].forEach((y, i) => {
-        ctx.beginPath(); ctx.arc(colX[0], y, 9, 0, Math.PI * 2); ctx.fillStyle = cssVar('--bg-inset'); ctx.fill();
+        ctx.beginPath(); ctx.arc(colX[0], y, 9, 0, Math.PI * 2); ctx.fillStyle = cssVar('--card'); ctx.fill();
         ctx.lineWidth = 2; ctx.strokeStyle = cssVar('--data'); ctx.stroke();
         ctx.fillStyle = cssVar('--ink-2'); ctx.fillText(i ? 'y' : 'x', colX[0], y + 4);
       });
@@ -231,14 +234,16 @@ export default {
     const tc = document.createElement('canvas'); tc.width = G; tc.height = G;
     const tctx = tc.getContext('2d'); const timg = tctx.createImageData(G, G);
     function thumb(ctx, vals, x, y, size, tanh) {
+      const P = cssRgb('--bg'), M = cssRgb('--model'), colA = cssRgb('--data'), colB = cssRgb('--data-2');
       for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
         const v = vals[j * G + i];
         const k = tanh ? (v + 1) / 2 : v;
         const o = ((G - 1 - j) * G + i) * 4;
-        if (tanh) { timg.data[o] = 14 + 63 * k; timg.data[o + 1] = 20 + 206 * k; timg.data[o + 2] = 32 + 223 * k; }
+        // hidden neurons: paper where the neuron is quiet, blue ink where it fires
+        if (tanh) { for (let c = 0; c < 3; c++) timg.data[o + c] = P[c] + (M[c] - P[c]) * k * 0.85; }
         else {
-          const c = v >= 0.5 ? [79, 209, 165] : [245, 181, 68]; const a = Math.min(1, Math.abs(v - 0.5) * 2) * 0.8;
-          timg.data[o] = 14 + (c[0] - 14) * a; timg.data[o + 1] = 20 + (c[1] - 20) * a; timg.data[o + 2] = 32 + (c[2] - 32) * a;
+          const c = v >= 0.5 ? colB : colA; const a = Math.min(1, Math.abs(v - 0.5) * 2) * 0.6;
+          for (let ch = 0; ch < 3; ch++) timg.data[o + ch] = P[ch] + (c[ch] - P[ch]) * a;
         }
         timg.data[o + 3] = 255;
       }
@@ -247,20 +252,20 @@ export default {
       ctx.beginPath(); ctx.roundRect(x, y, size, size, 4); ctx.clip();
       ctx.imageSmoothingEnabled = true; ctx.drawImage(tc, x, y, size, size);
       ctx.restore();
-      ctx.lineWidth = 1; ctx.strokeStyle = cssVar('--line-strong');
+      ctx.lineWidth = 1.5; ctx.strokeStyle = cssVar('--ink');
       ctx.beginPath(); ctx.roundRect(x, y, size, size, 4); ctx.stroke();
     }
 
     root.append(h('div', { class: 'prose reveal', html: `
-      <p>Look at the little squares in the middle of the diagram. Each <strong>hidden neuron</strong> still only draws one soft straight edge
-      — you can see it as the boundary between dark and bright. The output neuron then mixes those edges together, and
-      mixing straight edges is enough to carve out circles, corners and even spirals.</p>
-      <p>Every coloured line between neurons is a weight, and <strong>all</strong> of them were adjusted together by the same
-      downhill-stepping you met in chapter 2. The trick for working out which way to nudge each weight is called
-      <span class="term term--learn">backpropagation</span>: the error at the output is passed backwards through the network,
-      so each weight learns how much it was to blame.</p>
-      <p>Try the spirals with 4 neurons, then with 8. Too few neurons and the network simply can't draw a shape that complicated —
-      the timeline flattens out well above zero. Stacking a second layer usually learns it faster: this is the "deep" in
+      <p>Look at the little squares in the middle of the diagram. Each <strong>hidden neuron</strong> still only draws one soft straight
+      edge, which you can spot as the border between pale and blue. The output neuron mixes those edges together, and it turns out
+      that mixing straight edges is enough to carve out circles, corners and even spirals.</p>
+      <p>Every coloured line between neurons is a weight, and <strong>all</strong> of them get adjusted together by the same downhill
+      stepping you met in chapter 2. The trick for working out which way to nudge each weight is called
+      <span class="term term--learn">backpropagation</span>. The error at the output gets passed backwards through the network, so each
+      weight finds out how much it was to blame.</p>
+      <p>Try the spirals with 4 neurons, then with 8. With too few neurons the network just can't draw a shape that complicated, and the
+      time machine flattens out well above zero. Stacking a second layer usually learns it faster. That's the "deep" in
       <span class="term term--model">deep learning</span>.</p>` }));
 
     rebuild();

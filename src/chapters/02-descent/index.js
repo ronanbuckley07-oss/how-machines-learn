@@ -1,8 +1,8 @@
-import { createPlot, scale, drawGrid, dot, cssVar } from '../../lib/canvas.js';
+import { createPlot, scale, drawGrid, dot, cssVar, HAND, MONO_SMALL, withAlpha } from '../../lib/canvas.js';
 import { createLoop } from '../../lib/loop.js';
 import { createTimeline } from '../../lib/timeline.js';
 import { reducedMotion } from '../../lib/motion.js';
-import { h, button, slider, segmented, readout, fmt, fmtAuto } from '../../lib/ui.js';
+import { h, button, slider, segmented, readout, fmt, fmtAuto, note } from '../../lib/ui.js';
 import { iceCreamData, LinearModel } from '../../ml/linear.js';
 import './chapter.css';
 
@@ -17,6 +17,8 @@ const PRESETS = { slow: 0.02, good: 0.15, wild: 1.04 };
 export default {
   id: 'getting-less-wrong',
   title: 'Learning by getting less wrong',
+  tab: 'Downhill',
+  blurb: 'Roll a ball down the error landscape',
   mount(root) {
     const model = new LinearModel(iceCreamData());
     model.c = 0;
@@ -26,13 +28,14 @@ export default {
     const Lmax = L(A0);
 
     root.append(h('div', { class: 'prose reveal', html: `
-      <p>Every possible line has an error score. So instead of looking at one line at a time, we can draw
-      <strong>all of them at once</strong>: tilt the line from steep-downhill to steep-uphill and plot the error for each tilt.</p>
-      <p>That gives the <span class="term term--error">red curve</span> below — a landscape of wrongness.
-      The best line sits at the bottom of the valley. The <span class="term term--learn">violet ball</span> is our current line.</p>
-      <p>The computer can't see the whole landscape. All it can feel is <strong>how steep the ground is right under the ball</strong>
-      (the dashed line). So it does the obvious thing: take a step downhill, then feel again. Press play.</p>` }));
+      <p>Every possible line has an error score. So instead of trying lines one at a time, we can draw
+      <strong>all of them at once</strong>: tilt the line from steeply downhill to steeply uphill, and plot the error for every tilt.</p>
+      <p>The result is the <span class="term term--error">red valley</span> below. The best line sits right at the bottom, and the
+      <span class="term term--learn">purple ball</span> is our current line.</p>
+      <p>Here's the catch. The computer can't see the whole valley. All it can feel is <strong>how steep the ground is right under the ball</strong>
+      (the dashed line). So it does the obvious thing: take a step downhill, feel again, repeat. Press play.</p>` }));
 
+    root.append(note('then pick "Too big" and watch it go wild', { right: true }));
     const lab = h('div', { class: 'lab reveal' });
     root.append(lab);
     const grid = h('div', { class: 'lab__grid lab__grid--split' });
@@ -59,9 +62,9 @@ export default {
         const xt = [-1, 0, 1, 2];
         drawGrid(ctx, sx, sy, { xTicks: xt, yTicks: [], w, h: hgt, labels: false });
         const ink3 = cssVar('--ink-3'), err = cssVar('--error'), learn = cssVar('--learn');
-        ctx.fillStyle = ink3; ctx.font = '11px "JetBrains Mono", monospace'; ctx.textAlign = 'center';
+        ctx.fillStyle = ink3; ctx.font = MONO_SMALL; ctx.textAlign = 'center';
         for (const a of xt) ctx.fillText(fmt(model.realSlope(a), 1), sx(a), hgt - 8);
-        ctx.font = '11px Inter, sans-serif'; ctx.textAlign = 'right';
+        ctx.font = HAND(19); ctx.textAlign = 'right';
         ctx.fillText('tilt of the line (cones per °C) →', w - 16, 26);
         ctx.textAlign = 'left'; ctx.fillText('↑ error', 34, 26);
 
@@ -69,25 +72,25 @@ export default {
         ctx.beginPath();
         for (let i = 0; i <= 200; i++) { const a = A0 + ((A1 - A0) * i) / 200; i ? ctx.lineTo(sx(a), sy(L(a))) : ctx.moveTo(sx(a), sy(L(a))); }
         ctx.save();
-        ctx.strokeStyle = err; ctx.lineWidth = 2.5; ctx.shadowColor = err; ctx.shadowBlur = 12; ctx.stroke();
+        ctx.strokeStyle = err; ctx.lineWidth = 2.5; ctx.stroke();
         ctx.restore();
         ctx.lineTo(sx(A1), hgt); ctx.lineTo(sx(A0), hgt); ctx.closePath();
         const g = ctx.createLinearGradient(0, 0, 0, hgt);
-        g.addColorStop(0, 'rgba(255,93,115,0.10)'); g.addColorStop(1, 'rgba(255,93,115,0)');
+        g.addColorStop(0, withAlpha('--error', 0.12)); g.addColorStop(1, withAlpha('--error', 0));
         ctx.fillStyle = g; ctx.fill();
 
         // bottom of the valley
         const best = model.optimum().a;
         ctx.setLineDash([2, 4]); ctx.strokeStyle = ink3; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(sx(best), sy(L(best))); ctx.lineTo(sx(best), hgt - 26); ctx.stroke(); ctx.setLineDash([]);
-        ctx.fillStyle = ink3; ctx.textAlign = 'center'; ctx.font = '11px Inter, sans-serif';
+        ctx.fillStyle = ink3; ctx.textAlign = 'center'; ctx.font = HAND(19);
         ctx.fillText('best line', sx(best), sy(L(best)) + 24);
 
         // trail of past positions (shows zig-zagging when the step is too big)
         const pts = trail.slice(-40).map((a) => [sx(clampA(a)), sy(Math.min(L(a), Lmax * 1.05))]);
-        ctx.strokeStyle = 'rgba(167,139,250,0.35)'; ctx.lineWidth = 1.5;
+        ctx.strokeStyle = withAlpha('--learn', 0.35); ctx.lineWidth = 1.5;
         ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke();
-        pts.forEach(([x, y], i) => dot(ctx, x, y, 2.5, `rgba(167,139,250,${0.25 + (0.5 * i) / pts.length})`, { glow: 0 }));
+        pts.forEach(([x, y], i) => dot(ctx, x, y, 2.5, withAlpha('--learn', 0.25 + (0.5 * i) / pts.length)));
 
         const a = displayA();
         const offChart = a < A0 || a > A1 || L(a) > Lmax * 1.05;
@@ -102,16 +105,16 @@ export default {
           const next = a - lr * model.grad(a, 0)[0];
           if (Math.abs(sx(next) - bx) > 6) {
             const ax = sx(clampA(next));
-            ctx.save(); ctx.strokeStyle = learn; ctx.fillStyle = learn; ctx.lineWidth = 2; ctx.shadowColor = learn; ctx.shadowBlur = 8;
+            ctx.save(); ctx.strokeStyle = learn; ctx.fillStyle = learn; ctx.lineWidth = 2;
             const ay = by - 22, dir = Math.sign(ax - bx);
             ctx.beginPath(); ctx.moveTo(bx, ay); ctx.lineTo(ax - dir * 6, ay); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax - dir * 9, ay - 5); ctx.lineTo(ax - dir * 9, ay + 5); ctx.closePath(); ctx.fill();
             ctx.restore();
           }
         }
-        dot(ctx, bx, by, 9, learn, { glow: 22 });
+        dot(ctx, bx, by, 9, learn);
         if (offChart) {
-          ctx.fillStyle = learn; ctx.font = '600 12px Inter, sans-serif'; ctx.textAlign = a > A1 ? 'right' : 'left';
+          ctx.fillStyle = learn; ctx.font = '700 ' + HAND(21); ctx.textAlign = a > A1 ? 'right' : 'left';
           ctx.fillText('off the chart!', bx + (a > A1 ? -14 : 14), by + 4);
         }
       },
@@ -131,9 +134,9 @@ export default {
         ctx.strokeStyle = errC; ctx.globalAlpha = 0.7; ctx.lineWidth = 1.5;
         for (const p of data) { ctx.beginPath(); ctx.moveTo(ix(p.x), iy(p.y)); ctx.lineTo(ix(p.x), iy(model.predict(p.x, a, 0))); ctx.stroke(); }
         ctx.globalAlpha = 1;
-        ctx.save(); ctx.strokeStyle = mC; ctx.lineWidth = 2.5; ctx.shadowColor = mC; ctx.shadowBlur = 10;
+        ctx.save(); ctx.strokeStyle = mC; ctx.lineWidth = 2.5;
         ctx.beginPath(); ctx.moveTo(ix(8), iy(model.predict(8, a, 0))); ctx.lineTo(ix(37), iy(model.predict(37, a, 0))); ctx.stroke(); ctx.restore();
-        for (const p of data) dot(ctx, ix(p.x), iy(p.y), 3.5, cssVar('--data'), { glow: 6 });
+        for (const p of data) dot(ctx, ix(p.x), iy(p.y), 3.5, cssVar('--data'));
       },
     });
     inset.canvas.setAttribute('role', 'img');
@@ -216,31 +219,31 @@ export default {
       const msgs = {
         ready: 'Pick a step size and press play.',
         running: lr < 0.06 ? 'Tiny steps: safe, but it will take ages to reach the bottom.'
-          : lr > 0.55 ? 'Big steps: it leaps right over the valley floor and zig-zags…'
+          : lr > 0.55 ? 'Big steps! It leaps right over the valley floor and zig-zags...'
           : 'Each step: feel the slope, move downhill in proportion to how steep it is.',
-        converged: `Reached the bottom in ${step} steps. Try a different step size — or rewind the timeline and change it mid-way.`,
-        diverged: 'Each leap overshoots further than the last — the error explodes. This is called diverging.',
+        converged: `Reached the bottom in ${step} steps. Try another step size, or rewind the time machine and change it halfway.`,
+        diverged: 'Each leap overshoots further than the last and the error explodes. This is called diverging.',
       };
       say.textContent = msgs[status];
       draw();
     }
 
     const tl = createTimeline(lab, {
-      title: 'Training timeline — error over time',
+      title: 'time machine: drag to rewind',
       logY: true,
       onScrubStart: () => loop.pause(),
       onView: (s) => { model.a = s.a; trail = s.trail.slice(); anim = null; update(); },
     });
 
     root.append(h('div', { class: 'prose reveal', html: `
-      <p>What you just watched is called <span class="term term--learn">gradient descent</span>. The
-      <em>gradient</em> is just the steepness under the ball, and <em>descent</em> means we keep stepping downhill.
-      The red curve is called the <span class="term term--error">loss function</span> — "loss" is the field's word for error.</p>
-      <p>The step size has a name too: the <span class="term term--learn">learning rate</span>. Too small and learning crawls.
-      Too big and every step overshoots the bottom, sometimes so badly that things spiral out of control.
-      Picking it well is one of the everyday chores of machine learning.</p>
-      <p>Real models have millions of knobs instead of one, so their landscape has millions of directions. But the recipe
-      is exactly the same: feel the slope in every direction at once, and step downhill.</p>` }));
+      <p>What you just watched is called <span class="term term--learn">gradient descent</span>. The <em>gradient</em> is just the steepness
+      under the ball, and <em>descent</em> means we keep heading downhill. The red curve is the
+      <span class="term term--error">loss function</span> ("loss" is the field's word for error).</p>
+      <p>The step size has a name too: the <span class="term term--learn">learning rate</span>. Too small and learning crawls along. Too big and
+      every step overshoots the bottom, sometimes so badly that things spiral out of control. Picking a good one is one of the
+      everyday chores of machine learning.</p>
+      <p>Real models have millions of knobs instead of one, so their landscape has millions of directions. The recipe doesn't change
+      though: feel the slope in every direction at once, and step downhill.</p>` }));
 
     update();
     (window.__ml ??= {}).ch2 = {
