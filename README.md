@@ -35,7 +35,8 @@ chapter 6's is over *words read*, so they show how more data changes a model.
 Requires Node.js 18+.
 
 ```bash
-cd ml-explorable
+git clone https://github.com/ronanbuckley07-oss/how-machines-learn.git
+cd how-machines-learn
 npm install
 npm run dev        # http://localhost:5173
 ```
@@ -74,15 +75,14 @@ The build is a folder of static files, so any static host works. `vite.config.js
 uses a relative `base`, so it also works from a sub-path.
 
 **GitHub Pages** (set up in this repo): the workflow in
-`.github/workflows/deploy-ml-explorable.yml` builds and publishes the site on
-every push to `main` that touches `ml-explorable/`. One-time setup: in the
-repository's **Settings → Pages**, set **Source** to **GitHub Actions**. The site
-will be at `https://<user>.github.io/<repo>/`. You can also run the workflow by
-hand from the **Actions** tab.
+`.github/workflows/deploy.yml` runs the unit tests, builds, and publishes the
+site on every push to `main`. One-time setup: in the repository's
+**Settings → Pages**, set **Source** to **GitHub Actions**. The site will be at
+<https://ronanbuckley07-oss.github.io/how-machines-learn/>. You can also run the
+workflow by hand from the **Actions** tab.
 
 **Netlify / Vercel / Cloudflare Pages**: import the repository and set
 
-- base / root directory: `ml-explorable`
 - build command: `npm run build`
 - output directory: `dist`
 
@@ -91,7 +91,7 @@ Or drag the `dist/` folder onto <https://app.netlify.com/drop>.
 ## Project structure
 
 ```
-ml-explorable/
+how-machines-learn/
   index.html               page shell, hero, colour key
   src/
     main.js                mounts chapters in order + scroll reveals
