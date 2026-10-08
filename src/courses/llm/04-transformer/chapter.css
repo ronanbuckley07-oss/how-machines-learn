@@ -1,0 +1,23 @@
+.tf-pickers { display: flex; gap: 8px; flex-wrap: wrap; }
+.tf-select { font: 600 1rem var(--font-mono); min-height: 44px; padding: 0 10px; border: 2px solid var(--ink); border-radius: 6px; background: var(--highlight); color: var(--ink); }
+.tf-flow { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+.tf-stage { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 14px 0; border-top: 2px dashed var(--rule-strong); position: relative; }
+@media (min-width: 860px) { .tf-stage { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); align-items: center; } }
+.tf-stage__num { font-family: var(--font-hand); font-size: 1.6rem; color: var(--error); line-height: 1; }
+.tf-stage__title { font-family: var(--font-display); font-size: 1.2rem; }
+.tf-stage__text .katex-display { margin: 0.4em 0; text-align: left; }
+.tf-stage__text .katex-display > .katex { text-align: left; }
+.tf-stage__mat { overflow-x: auto; }
+.tf-trio { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 18px; }
+@media (min-width: 860px) { .tf-trio { grid-template-columns: repeat(3, minmax(0, 1fr)); } .tf-trio .tf-stage { grid-template-columns: minmax(0, 1fr); } }
+.tf-mat { display: grid; gap: 2px; width: max-content; max-width: 100%; }
+.tf-mat__c { font: 500 0.78rem var(--font-mono); padding: 6px 4px; text-align: center; border: 1px solid rgba(34,32,28,.35); border-radius: 2px; min-width: 2.6rem; }
+.tf-mat__h { font: 0.72rem var(--font-mono); color: var(--ink-3); text-align: center; align-self: end; }
+.tf-mat__r { text-align: right; padding-right: 6px; align-self: center; font-size: 0.8rem; color: var(--ink-2); }
+.tf-shape { font-family: var(--font-hand); font-size: 1.15rem; color: var(--ink-3); margin-top: 2px; }
+.tf-probs { display: flex; flex-direction: column; gap: 4px; }
+.tf-prob { display: grid; grid-template-columns: 3.5rem 1fr 2.6rem; gap: 8px; align-items: center; }
+.tf-prob__w { font-family: var(--font-mono); }
+.tf-prob__t { height: 14px; border-left: 2px solid var(--ink); }
+.tf-prob__f { display: block; height: 100%; background: var(--model); border: 1.5px solid var(--ink); border-left: 0; }
+.tf-prob__n { font: 0.85rem var(--font-mono); text-align: right; }

@@ -1,0 +1,15 @@
+.att-side { display: flex; flex-direction: column; gap: 8px; }
+.att-label { font-family: var(--font-hand); font-size: 1.35rem; margin: 0; }
+.att-bars { display: flex; flex-direction: column; gap: 3px; }
+.att-bar { display: grid; grid-template-columns: 5.5rem 1fr 2.8rem; gap: 8px; align-items: center; font-size: 0.92rem; }
+.att-bar__w { font-family: var(--font-mono); }
+.att-bar__t { height: 14px; border-left: 2px solid var(--ink); }
+.att-bar__f { display: block; height: 100%; background: var(--learn); border: 1.5px solid var(--ink); border-left: 0; }
+.att-bar__n { font-family: var(--font-mono); text-align: right; font-size: 0.85rem; }
+.att-heat { display: grid; gap: 3px; margin-top: 14px; overflow-x: auto; }
+.att-heat__row { display: grid; grid-template-columns: 6.5rem repeat(6, minmax(2.6rem, 1fr)); gap: 3px; }
+.att-heat__head { font-family: var(--font-mono); font-size: 0.85rem; display: flex; align-items: center; justify-content: center; }
+.att-heat__corner { font-family: var(--font-hand); font-size: 1rem; color: var(--ink-3); display: flex; align-items: center; }
+.att-heat__cell { font: 600 0.85rem var(--font-mono); display: flex; align-items: center; justify-content: center; min-height: 40px; border: 1.5px solid var(--ink); border-radius: 3px; }
+.att-heat__cell.is-masked { background: repeating-linear-gradient(45deg, var(--paper-2) 0 4px, transparent 4px 8px) !important; color: var(--ink-3) !important; border-style: dashed; }
+.lab--small { box-shadow: 3px 3px 0 var(--ink); margin: 0.6rem 0 1rem; }

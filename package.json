@@ -13,5 +13,8 @@
   "devDependencies": {
     "playwright-core": "1.56.1",
     "vite": "^7.1.0"
+  },
+  "dependencies": {
+    "katex": "^0.16.22"
   }
 }

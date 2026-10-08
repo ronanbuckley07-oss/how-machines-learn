@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>How Machines Learn</title>
-    <meta name="description" content="A hands-on guide to machine learning for curious humans. Drag, slide and watch real models learn in your browser." />
+    <title>Field Notes</title>
+    <meta name="description" content="Explorable notebooks on how machines learn, the math inside large language models, and stochastic calculus for markets. Everything is computed live in your browser." />
     <meta name="theme-color" content="#f6f0e1" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23f6f0e1'/%3E%3Cpath d='M5 24 Q16 20 27 8' stroke='%231f4fd1' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='10' cy='16' r='3' fill='%23c46a00'/%3E%3Ccircle cx='21' cy='19' r='3' fill='%23c46a00'/%3E%3C/svg%3E" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -14,44 +14,15 @@
   <body>
     <header class="masthead">
       <div class="masthead__inner">
-        <a class="masthead__title" href="#start">How machines learn</a>
+        <a class="masthead__title" href="#">field notes</a>
+        <span class="masthead__course" hidden></span>
         <nav class="tabs" role="tablist" aria-label="Chapters"></nav>
       </div>
     </header>
 
-    <main id="pages">
-      <section class="page" id="start" role="tabpanel" aria-labelledby="tab-start" tabindex="-1">
-        <div class="cover">
-          <div>
-            <h1>How machines learn
-              <svg class="squiggle" viewBox="0 0 420 22" aria-hidden="true"><path d="M3 14 C 40 4, 70 20, 110 11 S 180 4, 220 13 S 300 20, 340 9 S 400 8, 417 12" fill="none" stroke="#d63a2a" stroke-width="4" stroke-linecap="round"/></svg>
-            </h1>
-            <p class="cover__sub">a hands-on guide for curious humans</p>
-            <p class="cover__lede">
-              No equations to memorise. You'll fit lines with your fingers, roll a ball downhill, wire up a neuron
-              and teach a tiny network to tell spirals apart. Everything you see is a real model learning, live, right here in your browser.
-            </p>
-            <ul class="key" aria-label="Colour key used on every page">
-              <li><i style="background:var(--data)"></i>orange is data: what we actually saw</li>
-              <li><i style="background:var(--model)"></i>blue is the model: its best guess</li>
-              <li><i style="background:var(--error)"></i>red is error: how wrong the guess is</li>
-              <li><i style="background:var(--learn)"></i>purple is learning: the next nudge</li>
-            </ul>
-            <a class="btn btn--primary" href="#what-is-a-model">Start with chapter 1 →</a>
-          </div>
-          <figure class="polaroid">
-            <div class="polaroid__frame" id="hero-plot"></div>
-            <figcaption>a real neural net, learning right now ↑</figcaption>
-          </figure>
-        </div>
-        <div class="contents">
-          <h2>What's inside</h2>
-          <ol id="contents-list"></ol>
-        </div>
-      </section>
-    </main>
+    <main id="pages"></main>
 
-    <footer class="site-footer">made with plain JavaScript and no ML libraries. every model here trains for real.</footer>
+    <footer class="site-footer">made with plain JavaScript. every model and simulation here runs for real, in your browser.</footer>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

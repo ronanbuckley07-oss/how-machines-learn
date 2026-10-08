@@ -35,6 +35,7 @@ export default {
   id: 'where-next',
   kicker: 'the end (sort of)',
   tab: 'What next',
+  sims: false,
   blurb: 'Your new vocabulary, and where to go from here',
   title: 'What you\'ve learned',
   mount(root) {
@@ -45,7 +46,7 @@ export default {
       <p>Here is the vocabulary you picked up along the way. Tap any card to jump back to where you met it.</p>` }));
 
     root.append(h('div', { class: 'glossary reveal' }, GLOSSARY.map(([role, term, def, id]) =>
-      h('a', { class: `gloss gloss--${role}`, href: `#${id}` }, h('span', { class: 'gloss__term' }, term), h('span', { class: 'gloss__def' }, def)))));
+      h('a', { class: `gloss gloss--${role}`, href: `#ml/${id}` }, h('span', { class: 'gloss__term' }, term), h('span', { class: 'gloss__def' }, def)))));
 
     root.append(h('h3', { class: 'ch7-h reveal' }, 'What this page simplified'));
     root.append(h('div', { class: 'simplified reveal' }, SIMPLIFIED.map(([t, d]) => h('details', {}, h('summary', {}, t), h('p', {}, d)))));
